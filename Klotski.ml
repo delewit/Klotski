@@ -1,5 +1,5 @@
 (* Ocaml functions written by Douglas Lewit of Oakton Community College and Northeastern Illinois University. 
-   Everything in this program file is up-to-date as of August 2, 2017. *)
+   Everything in this program file is up-to-date as of September 28th, 2017. *)
 
 exception NotFound ;;
 
@@ -14,9 +14,16 @@ type ('a, 'set) set_operations =
     add   : 'a -> 'set -> 'set ;
   }
 
+
 let rec loop (p : ('a -> bool)) (f : ('a -> 'a)) (x : 'a) : 'a = match p x with 
-                                                      |true     -> x 
-                                                      |false    -> loop p f (f x) ;;
+                                                      |true     ->  x 
+                                                      |false    ->  loop p f (f x) ;;
+
+
+let rec loop' (p : ('a -> bool)) (f : ('a -> 'a)) (x : 'a) : 'a list = match p x with 
+                                                       |true        ->  [x]
+                                                       |false       ->   x :: loop' p f (f x) ;;
+
 
 
 let rec exists (p : ('a -> bool)) (ls : 'a list) : bool = match ls with 
@@ -24,6 +31,7 @@ let rec exists (p : ('a -> bool)) (ls : 'a list) : bool = match ls with
                                               |head :: tail -> if p head 
                                                                then true 
                                                                else exists p tail ;;
+
 
 let rec find (p : ('a -> bool)) (ls : 'a list) : 'a = match ls with 
                                             |[]            -> raise NotFound 
@@ -87,7 +95,8 @@ let solve (r : 'a rel) (p : 'a prop) (x : 'a) : 'a =
        then x 
        else solver r x 1 ;;
 
-
+(*  Here's my original solve_path function.  It is definitely defective and screwed up!!!
+    But I include it here for comparison with the solve_path function below that really works!!!
 let solve_path (r : 'a rel) (p : 'a prop) (x : 'a) : 'a list =
   let rec last (lst : 'a list) : 'a =
     match lst with
@@ -101,10 +110,26 @@ let solve_path (r : 'a rel) (p : 'a prop) (x : 'a) : 'a list =
         let listOfPossibleSolutions = (iter_rel r' n) x in
         if exists p listOfPossibleSolutions
         then [find p listOfPossibleSolutions]
-        else (last listOfPossibleSolutions) :: solver r' x (n + 1)
+        else 
+         begin print_endline (string_of_int (last listOfPossibleSolutions)); Thread.delay 1.0;
+               (last listOfPossibleSolutions) :: solver r' x (n + 1)
+         end
     in if p x 
        then [x]
        else x :: solver r x 1 ;;
+ *)
+
+(* The correct solve_path function needed to solve the Klotski Puzzle problem. *)
+let solve_path (r : 'a rel) (p : 'a prop) (x : 'a) : 'a list =
+  let rec last (lst : 'a list) : 'a =
+    match lst with
+    |[]            -> raise (invalid_arg "Bad argument")
+    (* The base case for empty lists. *)
+    |head :: []    -> head
+    (* The base case for non-empty lists. *)
+    |head :: tail  -> last tail (* The general recursive case. *)
+  in solve (fun path -> List.map (fun y -> path @ [y]) (r (last path))) (fun path -> p (last path)) [x] ;; 
+  
 
 
 (* The following two functions can be used to instantiate records of type ('a, 'a list) set_operations. *)
@@ -148,7 +173,7 @@ let intersection (listOfSets : 'a list list) : 'a list =
 
 
 (* Here is Step #9 of the Klotski Puzzle solution guide from the OCaml MOOC. *)
-let archive_map (opset : ('a, 'set) set_operations ) (rel : 'a rel) ((s, l) : ('set * 'a list)) : ('set * 'a list) =
+let archive_map (opset : ('a, 'set) set_operations) (rel : 'a rel) ((s, l) : ('set * 'a list)) : ('set * 'a list) =
   let rec includeInList (s : 'set) (ls : 'a list) (accumulator : 'a list) : 'a list =
     match ls with
     |[]             ->  accumulator
@@ -162,8 +187,31 @@ let archive_map (opset : ('a, 'set) set_operations ) (rel : 'a rel) ((s, l) : ('
   (s', l') ;;
 
 
+
+(* Here is Step #10 of the Klotski Puzzle solution guide from the OCaml MOOC. *)
+let solve' (opset : ('a, 'set) set_operations) (rel : 'a rel) (predicate : 'a prop) (x : 'a) : 'a =
+  let archive_map' opset' rel' (s, l) =
+    loop (fun (x, y) -> exists predicate x) (fun (x, y) -> archive_map opset' rel' (x, y)) (s, l)
+  in let (s, l) = archive_map' opset rel ([], [x])
+     in find predicate l ;;
+
+
+(* Here is Step #11 of the Klotski Puzzle solution guide from the OCaml MOOC. *)
+  let solve_path' (opset : ('a, 'set) set_operations) (rel : 'a rel) (predicate : 'a prop) (x : 'a) : 'a list =
+  let rec last =
+    function
+    |[]           -> raise (invalid_arg "The empty list doesn't have a last element. Try again!!!")
+    |head :: []   -> head
+    |head :: tail -> last tail
+  in
+  solve' {empty = []; add = addElement; mem = member} (fun path -> List.map (fun y -> path @ [y])
+         (rel (last path))) (fun path -> predicate (last path)) [x] ;;  
+
+
+(* For the sake of comic relief!!! *)
 let () =
   Printf.printf "\nThis %s puzzle sure is complicated stuff!\n" "Klotski";
   Printf.printf "\n"
+
 
 
