@@ -1,3 +1,5 @@
+Tests
+
 *.annot
 *.cmo
 *.cma
@@ -18,3 +20,7 @@ _build/
 # oasis generated files
 setup.data
 setup.log
+
+# oUnit logs and cache
+oUnit*.log
+oUnit*.cache
