@@ -15,42 +15,46 @@ type ('a, 'set) set_operations =
   }
 
 
-let rec loop (p : ('a -> bool)) (f : ('a -> 'a)) (x : 'a) : 'a = match p x with 
-                                                      |true     ->  x 
-                                                      |false    ->  loop p f (f x) ;;
+let rec loop (p : ('a -> bool)) (f : ('a -> 'a)) (x : 'a) : 'a =
+  match p x with 
+  |true     ->  x 
+  |false    ->  loop p f (f x) ;;
 
 
-let rec loop' (p : ('a -> bool)) (f : ('a -> 'a)) (x : 'a) : 'a list = match p x with 
-                                                       |true        ->  [x]
-                                                       |false       ->   x :: loop' p f (f x) ;;
+let rec loop' (p : ('a -> bool)) (f : ('a -> 'a)) (x : 'a) : 'a list =
+  match p x with 
+  |true        ->  [x]
+  |false       ->   x :: loop' p f (f x) ;;
 
 
 
-let rec exists (p : ('a -> bool)) (ls : 'a list) : bool = match ls with 
-                                              |[]           -> false
-                                              |head :: tail -> if p head 
-                                                               then true 
-                                                               else exists p tail ;;
+let rec exists (p : ('a -> bool)) (ls : 'a list) : bool =
+  match ls with 
+  |[]           -> false
+  |head :: tail -> if p head 
+                   then true 
+                   else exists p tail ;;
 
 
-let rec find (p : ('a -> bool)) (ls : 'a list) : 'a = match ls with 
-                                            |[]            -> raise NotFound 
-                                            |head :: tail  -> if p head 
-                                                              then head 
-                                                              else find p tail ;;
+let rec find (p : ('a -> bool)) (ls : 'a list) : 'a =
+  match ls with 
+  |[]            -> raise NotFound 
+  |head :: tail  -> if p head 
+                    then head 
+                    else find p tail ;;
 
 (* near returns the function, near'. *)
 let near : int rel =   (* The default step size here is just 1. *)
-                       let rec sequence ?step:(s=1) lower upper = 
-                               if lower > upper 
-                               then [] 
-                               else lower :: sequence ~step:s (lower + s) upper 
-                       in 
-                       let near' (n : int) : int list = 
-                               let lower_bound = n - 2 in 
-                               let upper_bound = n + 2 in 
-                               sequence lower_bound upper_bound 
-                       in near' (* Here we have an example of "partial function application". *) ;;
+  let rec sequence ?step:(s=1) lower upper = 
+    if lower > upper 
+    then [] 
+    else lower :: sequence ~step:s (lower + s) upper 
+  in 
+  let near' (n : int) : int list = 
+    let lower_bound = n - 2 in 
+    let upper_bound = n + 2 in 
+    sequence lower_bound upper_bound 
+  in near' (* Here we have an example of "partial function application". *) ;;
 
 (* flat_map returns the function, flat_map'. *)
 let flat_map (rel_function : 'e rel) : 'e list -> 'e list = 
