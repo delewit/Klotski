@@ -14,6 +14,17 @@ type ('a, 'set) set_operations =
     add   : 'a -> 'set -> 'set ;
   }
 
+module IntSet = Set.Make(struct
+  type t = int
+  let compare = Pervasives.compare
+end)
+
+let int_set_ops : (int, IntSet.t) set_operations =
+  {
+    empty = IntSet.empty ;
+    mem = IntSet.mem ;
+    add = IntSet.add ;
+  }
 
 let rec loop (p : ('a -> bool)) (f : ('a -> 'a)) (x : 'a) : 'a =
   match p x with 
