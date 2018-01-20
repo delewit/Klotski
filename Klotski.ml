@@ -15,6 +15,20 @@ type ('a, 'set) set_operations =
   }
 
 
+
+module IntSet = Set.Make(struct
+  type t = int
+  let compare = Pervasives.compare
+end)
+
+let int_set_ops : (int, IntSet.t) set_operations =
+  {
+    empty = IntSet.empty ;
+    mem = IntSet.mem ;
+    add = IntSet.add ;
+  }
+
+
 let rec loop (p : ('a -> bool)) (f : ('a -> 'a)) (x : 'a) : 'a =
   match p x with 
   |true     ->  x 
@@ -151,10 +165,16 @@ let rec addElement (x : 'a) (ls : 'a list) : 'a list =
     |true        -> ls ;;
 
 
-
+let list_set : ('a, 'a list) set_operations =
+  {
+    empty = [] ;
+    mem = member ;
+    add = addElement ;
+  }
+  
 (* The following two functions can be used to find the union and intersection of sets with the CAVEAT that these 
    sets are represented as lists, AND FURTHERMORE that these lists are embedded within a larger list. *)
-let union (listOfSets : 'a list list) : 'a list =
+(* let union (listOfSets : 'a list list) : 'a list =
   let rec removeDups (lst : 'a list) : 'a list =
     match lst with
     |[]           -> []
@@ -162,9 +182,9 @@ let union (listOfSets : 'a list list) : 'a list =
                      then removeDups tail
                      else head :: removeDups tail
   in List.fold_left (fun x y -> removeDups (x @ y)) [] listOfSets ;;
+ *)
 
-
-let intersection (listOfSets : 'a list list) : 'a list =
+(* let intersection (listOfSets : 'a list list) : 'a list =
   let rec findSharedElements (list1 : 'a list) (list2 : 'a list) (intersection : 'a list) : 'a list =
     match list1 with
     |[]              -> intersection
@@ -174,7 +194,7 @@ let intersection (listOfSets : 'a list list) : 'a list =
   in let findSharedElems ls1 ls2 = findSharedElements ls1 ls2 []
      in
      List.fold_left (fun x y -> findSharedElems x y) (List.hd listOfSets) (List.tl listOfSets) ;;
-
+ *)
 
 (* Here is Step #9 of the Klotski Puzzle solution guide from the OCaml MOOC. *)
 let archive_map (opset : ('a, 'set) set_operations) (rel : 'a rel) ((s, l) : ('set * 'a list)) : ('set * 'a list) =
@@ -187,7 +207,9 @@ let archive_map (opset : ('a, 'set) set_operations) (rel : 'a rel) ((s, l) : ('s
   in 
   let l_ = flat_map rel l in
   let l' = includeInList s l_ [] in
-  let s' = union [s; l'] in
+  let s' = List.fold_left (fun set element -> opset.add element set) s l'
+  in 
+  (*  let s' = union [s; l'] in *)
   (s', l') ;;
 
 
@@ -195,13 +217,13 @@ let archive_map (opset : ('a, 'set) set_operations) (rel : 'a rel) ((s, l) : ('s
 (* Here is Step #10 of the Klotski Puzzle solution guide from the OCaml MOOC. *)
 let solve' (opset : ('a, 'set) set_operations) (rel : 'a rel) (predicate : 'a prop) (x : 'a) : 'a =
   let archive_map' opset' rel' (s, l) =
-    loop (fun (x, y) -> exists predicate x) (fun (x, y) -> archive_map opset' rel' (x, y)) (s, l)
-  in let (s, l) = archive_map' opset rel ([], [x])
+    loop (fun (x, y) -> exists predicate y) (fun (x, y) -> archive_map opset' rel' (x, y)) (s, l)
+  in let (s, l) = archive_map' opset rel (opset.empty, [x])
      in find predicate l ;;
 
 
 (* Here is Step #11 of the Klotski Puzzle solution guide from the OCaml MOOC. *)
-  let solve_path' (opset : ('a, 'set) set_operations) (rel : 'a rel) (predicate : 'a prop) (x : 'a) : 'a list =
+let solve_path' (opset : ('a, 'set) set_operations) (rel : 'a rel) (predicate : 'a prop) (x : 'a) : 'a list =
   let rec last =
     function
     |[]           -> raise (invalid_arg "The empty list doesn't have a last element. Try again!!!")
