@@ -15,6 +15,11 @@ type ('a, 'set) set_operations =
   }
 
 
+type ('configuration, 'move) puzzle =
+    { move : 'configuration -> 'move -> 'configuration;
+      possible_moves : 'configuration -> 'move list;
+      final : 'configuration -> bool
+    }
 
 module IntSet = Set.Make(struct
   type t = int
