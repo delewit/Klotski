@@ -233,7 +233,7 @@ let rec last = function
   |head :: tail -> last tail ;;
 
 
-let e_rel_list (n : 'e rel) (x : 'e list) : 'e list list =
+let e_rel_list1 (n : 'e rel) (x : 'e list) : 'e list list =
   let elistList = n (last x)
   in let rec appendLists (x1 : 'a list) (x2 : 'a list) (accum : 'a list list) : 'a list list =
          match x2 with
@@ -241,8 +241,11 @@ let e_rel_list (n : 'e rel) (x : 'e list) : 'e list list =
          |head :: tail -> appendLists x1 tail ((x1 @ [head]) :: accum)
          in appendLists x elistList [] ;;
                                                                      
-                                                         
 
+let e_rel_list2 (n : 'e rel) (x : 'e list) : 'e list list =
+  let elistList = n (last x)
+  in List.map (fun t -> x @ [t]) elistList ;;
+  
 (* Here is Step #11 of the Klotski Puzzle solution guide from the OCaml MOOC. *)
 (* let solve_path' (opset : ('a list, 'set) set_operations) (rel : 'a rel) (predicate : 'a prop) (x : 'a) : 'a list = *)
 
