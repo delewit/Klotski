@@ -54,3 +54,17 @@ let () =
   run_test_tt_main exists_tests ;;
 
 
+(* find returns an int, but can raise an exception. *)
+let find_tests =
+  "Find Tests" >:::
+    ["Evaluates to 10" >::(fun cxt -> assert_equal 10
+     (find (fun t -> t = 10) [1; 2; 3; 4; 5; 6; 7; 8; 9; 10]));
+     "Raises Exception" >:: (fun cxt -> assert_raises NotFound 
+     (fun () -> find (fun t -> t = 10) [1; 2; 3; 4; 5; 6; 7; 8; 9]));
+    ] ;;
+
+
+let () =
+  run_test_tt_main find_tests ;;
+
+

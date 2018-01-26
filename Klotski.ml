@@ -221,23 +221,37 @@ let archive_map (opset : ('a, 'set) set_operations) (rel : 'a rel) ((s, l) : ('s
 
 (* Here is Step #10 of the Klotski Puzzle solution guide from the OCaml MOOC. *)
 let solve' (opset : ('a, 'set) set_operations) (rel : 'a rel) (predicate : 'a prop) (x : 'a) : 'a =
-  let archive_map' opset' rel' (s, l) =
-    loop (fun (x, y) -> exists predicate y) (fun (x, y) -> archive_map opset' rel' (x, y)) (s, l)
-  in let (s, l) = archive_map' opset rel (opset.empty, [x])
+  let archive_map' rel' (s, l) =
+    loop (fun (x, y) -> exists predicate y) (fun (x, y) -> archive_map opset rel' (x, y)) (s, l)
+  in let (s, l) = archive_map' rel (opset.empty, [x])
      in find predicate l ;;
 
 
-(* Here is Step #11 of the Klotski Puzzle solution guide from the OCaml MOOC. *)
-let solve_path' (opset : ('a, 'set) set_operations) (rel : 'a rel) (predicate : 'a prop) (x : 'a) : 'a list =
-  let rec last =
-    function
-    |[]           -> raise (invalid_arg "The empty list doesn't have a last element. Try again!!!")
-    |head :: []   -> head
-    |head :: tail -> last tail
-  in
-  solve' {empty = []; add = addElement; mem = member} (fun path -> List.map (fun y -> path @ [y])
-         (rel (last path))) (fun path -> predicate (last path)) [x] ;;  
+let rec last = function
+  |[]           -> raise (Invalid_argument "Bad arg!")
+  |head :: []   -> head
+  |head :: tail -> last tail ;;
 
+
+let e_rel_list (n : 'e rel) (x : 'e list) : 'e list list =
+  let elistList = n (last x)
+  in let rec appendLists (x1 : 'a list) (x2 : 'a list) (accum : 'a list list) : 'a list list =
+         match x2 with
+         |[]           -> accum
+         |head :: tail -> appendLists x1 tail ((x1 @ [head]) :: accum)
+         in appendLists x elistList [] ;;
+                                                                     
+                                                         
+
+(* Here is Step #11 of the Klotski Puzzle solution guide from the OCaml MOOC. *)
+(* let solve_path' (opset : ('a list, 'set) set_operations) (rel : 'a rel) (predicate : 'a prop) (x : 'a) : 'a list = *)
+
+  
+    
+  
+
+(* let rec solve_puzzle (p : ('c, 'm) puzzle) (opset : ('c list, 's) set_operations) (c : 'c) : 'c list = *)
+ 
 
 (* For the sake of comic relief!!! *)
 let () =
