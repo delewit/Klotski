@@ -237,7 +237,7 @@ let e_rel_list1 (n : 'e rel) (x : 'e list) : 'e list list =
   let elistList = n (last x)
   in let rec appendLists (x1 : 'a list) (x2 : 'a list) (accum : 'a list list) : 'a list list =
          match x2 with
-         |[]           -> accum
+         |[]           -> List.rev accum
          |head :: tail -> appendLists x1 tail ((x1 @ [head]) :: accum)
          in appendLists x elistList [] ;;
                                                                      
