@@ -191,7 +191,6 @@ let archive_map (opset : ('a, 'set) set_operations) (rel : 'a rel) ((s, l) : ('s
   let l' = includeInList s l_ [] in
   let s' = List.fold_left (fun set element -> opset.add element set) s l'
   in 
-  (*  let s' = union [s; l'] in *)
   (s', l') ;;
 
 
@@ -225,7 +224,7 @@ let e_rel_list2 (n : 'e rel) (x : 'e list) : 'e list list =
   
 (* Here is Step #11 of the Klotski Puzzle solution guide from the OCaml MOOC. *)
 (* let solve_path' (opset : ('a list, 'set) set_operations) (rel : 'a rel) (predicate : 'a prop) (x : 'a) : 'a list = *)
-
+  
   
     
   
