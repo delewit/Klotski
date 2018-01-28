@@ -118,29 +118,6 @@ let solve (r : 'a rel) (p : 'a prop) (x : 'a) : 'a =
        then x 
        else solver r x 1 ;;
 
-(*  Here's my original solve_path function.  It is definitely defective and screwed up!!!
-    But I include it here for comparison with the solve_path function below that really works!!!
-let solve_path (r : 'a rel) (p : 'a prop) (x : 'a) : 'a list =
-  let rec last (lst : 'a list) : 'a =
-    match lst with
-    |[]            -> raise (invalid_arg "Bad argument")
-    (* The base case for empty lists. *)
-    |head :: []    -> head
-    (* The base case for non-empty lists. *)
-    |head :: tail  -> last tail (* The general recursive case. *)
-  in 
-    let rec solver (r' : 'a rel) (x' : 'a) (n : int) =
-        let listOfPossibleSolutions = (iter_rel r' n) x in
-        if exists p listOfPossibleSolutions
-        then [find p listOfPossibleSolutions]
-        else 
-         begin print_endline (string_of_int (last listOfPossibleSolutions)); Thread.delay 1.0;
-               (last listOfPossibleSolutions) :: solver r' x (n + 1)
-         end
-    in if p x 
-       then [x]
-       else x :: solver r x 1 ;;
- *)
 
 (* The correct solve_path function needed to solve the Klotski Puzzle problem. *)
 let solve_path (r : 'a rel) (p : 'a prop) (x : 'a) : 'a list =
