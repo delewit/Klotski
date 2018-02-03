@@ -224,8 +224,9 @@ let e_rel_list2 (n : 'e rel) (x : 'e list) : 'e list list =
   
 (* Here is Step #11 of the Klotski Puzzle solution guide from the OCaml MOOC. *)
 let solve_path' (opset : ('a list, 'set) set_operations) (rel : 'a rel) (predicate : 'a prop) (x : 'a) : 'a list =
-  solve' opset (e_rel_list1 rel) (exists predicate) [x] ;;
-           
+  solve' opset (e_rel_list1 rel) (fun path -> let last_of_path = last path
+                                              in predicate last_of_path) [x] ;;
+
 
 (* let rec solve_puzzle (p : ('c, 'm) puzzle) (opset : ('c list, 's) set_operations) (c : 'c) : 'c list = *)
  
