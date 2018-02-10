@@ -228,7 +228,8 @@ let solve_path' (opset : ('a list, 'set) set_operations) (rel : 'a rel) (predica
                                               in predicate last_of_path) [x] ;;
 
 
-(* let rec solve_puzzle (p : ('c, 'm) puzzle) (opset : ('c list, 's) set_operations) (c : 'c) : 'c list = *)
+let rec solve_puzzle (p : ('c, 'm) puzzle) (opset : ('c list, 's) set_operations) (c : 'c) : 'c list =
+  solve_path' opset (fun x -> List.map (p.move x) (p.possible_moves x)) (p.final) c ;;
  
 
 (* For the sake of comic relief!!! *)
