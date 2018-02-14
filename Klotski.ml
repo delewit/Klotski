@@ -238,4 +238,33 @@ let () =
   Printf.printf "\n"
 
 
+                (* Here begins Part B of the Klotski Project. *)
+
+type piece_kind = S|H|V|C|X ;;
+
+
+type piece = piece_kind * int ;;
+
+
+let x = (X, 0) and s = (S, 0) and h = (H, 0) ;;
+let (c0, c1, c2, c3) = ((C, 0), (C, 1), (C, 2), (C, 3)) ;;
+let (v0, v1, v2, v3) = ((V, 0), (V, 1), (V, 2), (V, 3)) ;;
+let all_pieces : piece list = [ s; h; c0; c1; c2; c3; v0; v1; v2; v3 ] ;;
+
+
+type board = piece array array ;;
+
+
+let final (bd : board) : bool =
+  let check1 = (S, 0) = bd.(3).(1) in
+  let check2 = (S, 0) = bd.(3).(2) in
+  let check3 = (S, 0) = bd.(4).(1) in
+  let check4 = (S, 0) = bd.(4).(2) in
+  let boolean_list = [check1; check2; check3; check4]
+  in List.fold_right (&&) boolean_list true ;;
+
+
+type move = Move of piece * direction * board
+ and direction = { dcol : int; drow : int } ;;
+
 
