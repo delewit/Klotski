@@ -268,3 +268,11 @@ type move = Move of piece * direction * board
  and direction = { dcol : int; drow : int } ;;
 
 
+let initial_configuration =
+  [| [| (V,0) ; (S,0) ; (S,0) ; (V,1) |] ; 
+   [| (V,0) ; (S,0) ; (S,0) ; (V,1) |] ; 
+   [| (V,2) ; (H,0) ; (H,0) ; (V,3) |] ; 
+   [| (V,2) ; (C,0) ; (C,1) ; (V,3) |] ; 
+   [| (C,2) ; (X,0) ; (X,0) ; (C,3) |] |] ;;
+
+
