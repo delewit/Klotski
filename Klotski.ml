@@ -324,6 +324,28 @@ let shift_left (arr : 'a array) : 'a array =
   done; arr.(length - 1) <- first; arr ;;
 
 
+let shiftRight_subArray (arr : 'a array) (lower_index : int) (upper_index : int) : 'a array =
+  if lower_index < 0 || upper_index > Array.length arr - 1
+  then raise (Invalid_argument "Array index out of bounds exception.")
+  else begin
+          let section1 = Array.sub arr 0 lower_index in 
+          let section2 = Array.sub arr lower_index (upper_index - lower_index + 1) in
+          let section3 = Array.sub arr (upper_index + 1) (Array.length arr - upper_index - 1) in
+          Array.concat [Array.concat [section1; shift_right section2]; section3] 
+       end ;;
+                                        
+
+let shiftLeft_subArray (arr : 'a array) (lower_index : int) (upper_index : int) : 'a array =
+  if lower_index < 0 || upper_index > Array.length arr - 1
+  then raise (Invalid_argument "Array index out of bounds exception.")
+  else begin
+          let section1 = Array.sub arr 0 lower_index in 
+          let section2 = Array.sub arr lower_index (upper_index - lower_index + 1) in
+          let section3 = Array.sub arr (upper_index + 1) (Array.length arr - upper_index - 1) in
+          Array.concat [Array.concat [section1; shift_left section2]; section3] 
+       end ;;
+
+
 let move_piece (bd : board) (p : piece) (dir : direction) : board option =
   let new_board = Array.map Array.copy bd in 
   let positions = get_positions p bd in
