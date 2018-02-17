@@ -276,3 +276,72 @@ let initial_configuration =
    [| (C,2) ; (X,0) ; (X,0) ; (C,3) |] |] ;;
 
 
+let move (_ : board) (Move (_, _, b)) = b ;;
+
+
+let query_piece (bd : board) ((x, y) : (int * int)) : piece option =
+  try 
+    Some (bd.(x).(y))
+  with Invalid_argument e -> None ;;
+
+
+(* I thought this function might be helpful in case we need to start adding more elements to an array. *)
+let makeNewArray (old_array : 'a array) (element : 'a) : 'a array = 
+  let length = Array.length old_array 
+  in let new_array = Array.make (length + 1) element in 
+     for i=0 to length - 1 do 
+       new_array.(i) <- old_array.(i) 
+     done; new_array ;;
+
+
+let get_positions (p : piece) (bd : board) : ((int * int) list) =
+  let accumulator = ref [] in
+  let nrows = Array.length bd in
+  let ncols = Array.length bd.(0) in
+  for i=0 to nrows - 1 do
+    for j=0 to ncols - 1 do
+      if p = bd.(i).(j)
+      then accumulator := (i, j) :: !accumulator
+    done;
+  done;
+  !accumulator ;;
+
+
+(* I will need to use the shift_right and shift_left functions in the move_piece function that follows. *) 
+let shift_right (arr : 'a array) : 'a array = 
+  let length = Array.length arr in 
+  let last = arr.(length - 1) in 
+  for i=length - 1 downto 1 do 
+    arr.(i) <- arr.(i - 1) 
+  done; arr.(0) <- last; arr ;;
+
+
+let shift_left (arr : 'a array) : 'a array = 
+  let length = Array.length arr in 
+  let first = arr.(0) in 
+  for i=0 to length - 2 do 
+    arr.(i) <- arr.(i + 1)
+  done; arr.(length - 1) <- first; arr ;;
+
+
+let move_piece (bd : board) (p : piece) (dir : direction) : board option =
+  let new_board = Array.map Array.copy bd in 
+  let positions = get_positions p bd in
+  let positions' = List.map (fun (x, y) -> (x + dir.drow, y)) positions in
+  let positions'' = List.map (fun (x, y) -> (x, y + dir.dcol)) positions' in
+  let pieces = List.map (query_piece bd) positions'' in
+  let rec testPieces (p : piece option) (p_list : piece option list) : bool =
+    match p_list with
+    |[]            -> true
+    |head :: tail  -> if head = p || head = Some (X, 0) 
+                      then true && testPieces p tail
+                      else false
+  
+  in
+  if testPieces (Some p) pieces
+  then Some new_board
+  (* The above line of course is not algorithmically accurate. 
+     It's here for the sake of type-checking the move_piece function. *)
+  else None ;;
+  
+
