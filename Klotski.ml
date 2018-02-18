@@ -346,6 +346,24 @@ let shiftLeft_subArray (arr : 'a array) (lower_index : int) (upper_index : int) 
        end ;;
 
 
+let transposeMatrix (some_array : 'a array array) : 'a array array =
+  let rec transposeList (some_list : 'a list list) : 'a list list =
+    let rec transposeList' (some_list : 'a list list) : 'a list =
+      try 
+        match some_list with
+        |[]            ->  []
+        |head :: tail  ->  (List.hd head) :: transposeList' tail
+      with Failure f   ->  [] in 
+    try
+      if some_list = []
+      then []
+      else (transposeList' some_list) :: (transposeList (List.map List.tl some_list))
+    with Failure f   ->  [] in 
+  let some_list = Array.to_list (Array.map Array.to_list some_array) in
+  let transposed = transposeList some_list in
+  Array.of_list (List.map Array.of_list transposed) ;;
+
+
 let move_piece (bd : board) (p : piece) (dir : direction) : board option =
   let new_board = Array.map Array.copy bd in 
   let positions = get_positions p bd in
