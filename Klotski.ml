@@ -364,6 +364,23 @@ let transposeMatrix (some_array : 'a array array) : 'a array array =
   Array.of_list (List.map Array.of_list transposed) ;;
 
 
+let tupleList (listOfPairs : ('a * 'a) list) : ('a * 'a list) list  =
+  let rec tuple_List ?accumulator:(accum=[]) (n : 'a) (listOfPairs : ('a * 'a) list) : ('a * 'a list) = 
+    match listOfPairs with 
+    |[]             -> (n, List.sort compare accum)
+    |head :: tail   -> let first = fst head in 
+                       let second = snd head in 
+                       if n = first 
+                       then tuple_List ~accumulator:(second :: accum) n tail 
+                       else tuple_List ~accumulator:(accum) n tail in 
+  let rec tuple_List' (n_list : 'a list) (listOfPairs : ('a * 'a) list) : ('a * 'a list) list = 
+    match n_list with 
+    |[]                 -> [] 
+    |head :: tail       -> (tuple_List head listOfPairs) :: tuple_List' tail listOfPairs in 
+  let nList = List.sort_uniq compare begin List.fold_left (fun x (y, z) -> y :: x) [] listOfPairs end 
+  in tuple_List' nList listOfPairs ;; 
+
+
 let move_piece (bd : board) (p : piece) (dir : direction) : board option =
   let new_board = Array.map Array.copy bd in 
   let positions = get_positions p bd in
