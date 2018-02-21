@@ -378,7 +378,38 @@ let tupleList (listOfPairs : ('a * 'a) list) : ('a * 'a list) list  =
     |[]                 -> [] 
     |head :: tail       -> (tuple_List head listOfPairs) :: tuple_List' tail listOfPairs in 
   let nList = List.sort_uniq compare begin List.fold_left (fun x (y, z) -> y :: x) [] listOfPairs end 
-  in tuple_List' nList listOfPairs ;; 
+  in tuple_List' nList listOfPairs ;;
+
+
+let rec shiftArrayRow (dir : int) (arr : 'a array array) (tuple_list : (int * int list) list) : 'a array array =
+  match dir with
+  |(-1)   -> let arrCopy = Array.map Array.copy arr in
+	     begin
+	       match tuple_list with
+	       |[]              -> arrCopy
+	       |head :: tail    ->
+		 begin
+		   let h = fst head in
+		   let index1 = (List.hd (snd head)) in
+		   let index2 = (last (snd head)) in
+		   arrCopy.(h) <- shiftLeft_subArray arrCopy.(h) index1 index2
+		 end;
+		 shiftArrayRow dir arrCopy tail
+	     end 
+  |1      -> let arrCopy = Array.map Array.copy arr in
+	     begin
+	       match tuple_list with
+	       |[]              -> arrCopy
+	       |head :: tail    ->
+		 begin
+		   let h = fst head in
+		   let index1 = (List.hd (snd head)) in
+		   let index2 = (last (snd head)) in
+		   arrCopy.(h) <- shiftRight_subArray arrCopy.(h) index1 index2
+		 end;
+		 shiftArrayRow dir arrCopy tail
+	     end
+  |_      -> arr ;;
 
 
 let move_piece (bd : board) (p : piece) (dir : direction) : board option =
@@ -396,9 +427,7 @@ let move_piece (bd : board) (p : piece) (dir : direction) : board option =
   
   in
   if testPieces (Some p) pieces
-  then Some new_board
-  (* The above line of course is not algorithmically accurate. 
-     It's here for the sake of type-checking the move_piece function. *)
+  then Some new_board			 
   else None ;;
   
 
