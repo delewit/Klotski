@@ -381,7 +381,9 @@ let tupleList (listOfPairs : ('a * 'a) list) : ('a * 'a list) list  =
   in tuple_List' nList listOfPairs ;;
 
 
-let rec shiftArrayRow (dir : int) (arr : 'a array array) (tuple_list : (int * int list) list) : 'a array array =
+(* This function was challenging because of the subtle mixture of imperative and functional programming combined 
+   within a single function. *)
+let rec shiftArrayRows (dir : int) (arr : 'a array array) (tuple_list : (int * int list) list) : 'a array array =
   match dir with
   |(-1)   -> let arrCopy = Array.map Array.copy arr in
 	     begin
@@ -394,7 +396,7 @@ let rec shiftArrayRow (dir : int) (arr : 'a array array) (tuple_list : (int * in
 		   let index2 = (last (snd head)) in
 		   arrCopy.(h) <- shiftLeft_subArray arrCopy.(h) index1 index2
 		 end;
-		 shiftArrayRow dir arrCopy tail
+		 shiftArrayRows dir arrCopy tail
 	     end 
   |1      -> let arrCopy = Array.map Array.copy arr in
 	     begin
@@ -407,9 +409,9 @@ let rec shiftArrayRow (dir : int) (arr : 'a array array) (tuple_list : (int * in
 		   let index2 = (last (snd head)) in
 		   arrCopy.(h) <- shiftRight_subArray arrCopy.(h) index1 index2
 		 end;
-		 shiftArrayRow dir arrCopy tail
+		 shiftArrayRows dir arrCopy tail
 	     end
-  |_      -> arr ;;
+  |_      -> arr ;; 
 
 
 let move_piece (bd : board) (p : piece) (dir : direction) : board option =
