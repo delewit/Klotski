@@ -156,17 +156,17 @@ let list_set : ('a, 'a list) set_operations =
   
 (* The following two functions can be used to find the union and intersection of sets with the CAVEAT that these 
    sets are represented as lists, AND FURTHERMORE that these lists are embedded within a larger list. *)
-(* let union (listOfSets : 'a list list) : 'a list =
+let union (listOfSets : 'a list list) : 'a list =
   let rec removeDups (lst : 'a list) : 'a list =
     match lst with
     |[]           -> []
     |head :: tail -> if member head tail
                      then removeDups tail
                      else head :: removeDups tail
-  in List.fold_left (fun x y -> removeDups (x @ y)) [] listOfSets ;;
- *)
+  in List.sort compare begin List.fold_left (fun x y -> removeDups (x @ y)) [] listOfSets end ;;
+  
 
-(* let intersection (listOfSets : 'a list list) : 'a list =
+let intersection (listOfSets : 'a list list) : 'a list =
   let rec findSharedElements (list1 : 'a list) (list2 : 'a list) (intersection : 'a list) : 'a list =
     match list1 with
     |[]              -> intersection
@@ -175,8 +175,8 @@ let list_set : ('a, 'a list) set_operations =
                         else findSharedElements tail list2 intersection
   in let findSharedElems ls1 ls2 = findSharedElements ls1 ls2 []
      in
-     List.fold_left (fun x y -> findSharedElems x y) (List.hd listOfSets) (List.tl listOfSets) ;;
- *)
+     List.sort compare begin List.fold_left (fun x y -> findSharedElems x y) (List.hd listOfSets) (List.tl listOfSets) end ;;
+
 
 (* Here is Step #9 of the Klotski Puzzle solution guide from the OCaml MOOC. *)
 let archive_map (opset : ('a, 'set) set_operations) (rel : 'a rel) ((s, l) : ('set * 'a list)) : ('set * 'a list) =
@@ -429,7 +429,11 @@ let move_piece (bd : board) (p : piece) (dir : direction) : board option =
   
   in
   if testPieces (Some p) pieces
-  then Some new_board			 
+  then if dir.drow = 0
+       then let new_board' = shiftArrayRows (dir.dcol) new_board 
+		             begin tupleList begin union [positions; positions''] end end in
+	    Some new_board'
+       else None 
   else None ;;
   
 
