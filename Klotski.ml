@@ -62,7 +62,7 @@ let rec find (p : ('a -> bool)) (ls : 'a list) : 'a =
 		    then head
 		    else find p tail ;;
 
-  (* near returns the function, near'. *)
+(* near returns the function, near'. *)
 let near : int rel =   (* The default step size here is just 1. *)
   let rec sequence ?step:(s=1) lower upper =
     if lower > upper
@@ -105,7 +105,7 @@ let iter_rel (rel_func : 'e rel) (i : int) : 'e rel =
      in g ;;
 
 
-  (* Here is step #7 in building a generic puzzle solver that will later be applied to the Klotski Puzzle problem. 
+(* Here is step #7 in building a generic puzzle solver that will later be applied to the Klotski Puzzle problem. 
 The only possible problem with the "solve" function is that it could iterate indefinitely if no solution is ever 
 found. *)
 let solve (r : 'a rel) (p : 'a prop) (x : 'a) : 'a =
@@ -119,7 +119,7 @@ let solve (r : 'a rel) (p : 'a prop) (x : 'a) : 'a =
      else solver r x 1 ;;
 
 
-  (* The correct solve_path function needed to solve the Klotski Puzzle problem. *)
+(* The correct solve_path function needed to solve the Klotski Puzzle problem. *)
 let solve_path (r : 'a rel) (p : 'a prop) (x : 'a) : 'a list =
   let rec last (lst : 'a list) : 'a =
     match lst with
@@ -154,8 +154,8 @@ let list_set : ('a, 'a list) set_operations =
     add = addElement ;
   }
 
-    (* The following two functions can be used to find the union and intersection of sets with the CAVEAT that these 
-   sets are represented as lists, AND FURTHERMORE that these lists are embedded within a larger list. *)
+(* The following two functions can be used to find the union and intersection of sets with the CAVEAT that these 
+   sets are represented as lists, AND FURTHERMORE that these lists are embedded within a larger list. *)        
 let union (listOfSets : 'a list list) : 'a list =
   let rec removeDups (lst : 'a list) : 'a list =
     match lst with
@@ -178,7 +178,7 @@ let intersection (listOfSets : 'a list list) : 'a list =
      List.sort compare begin List.fold_left (fun x y -> findSharedElems x y) (List.hd listOfSets) (List.tl listOfSets) end ;;
 
 
-  (* Here is Step #9 of the Klotski Puzzle solution guide from the OCaml MOOC. *)
+(* Here is Step #9 of the Klotski Puzzle solution guide from the OCaml MOOC. *)
 let archive_map (opset : ('a, 'set) set_operations) (rel : 'a rel) ((s, l) : ('set * 'a list)) : ('set * 'a list) =
   let rec includeInList (s : 'set) (ls : 'a list) (accumulator : 'a list) : 'a list =
     match ls with
@@ -195,7 +195,7 @@ let archive_map (opset : ('a, 'set) set_operations) (rel : 'a rel) ((s, l) : ('s
 
 
 
-  (* Here is Step #10 of the Klotski Puzzle solution guide from the OCaml MOOC. *)
+(* Here is Step #10 of the Klotski Puzzle solution guide from the OCaml MOOC. *)
 let solve' (opset : ('a, 'set) set_operations) (rel : 'a rel) (predicate : 'a prop) (x : 'a) : 'a =
   let archive_map' rel' (s, l) =
     loop (fun (x, y) -> exists predicate y) (fun (x, y) -> archive_map opset rel' (x, y)) (s, l)
@@ -222,7 +222,7 @@ let e_rel_list2 (n : 'e rel) (x : 'e list) : 'e list list =
   let elistList = n (last x)
   in List.map (fun t -> x @ [t]) elistList ;;
 
-  (* Here is Step #11 of the Klotski Puzzle solution guide from the OCaml MOOC. *)
+(* Here is Step #11 of the Klotski Puzzle solution guide from the OCaml MOOC. *)
 let solve_path' (opset : ('a list, 'set) set_operations) (rel : 'a rel) (predicate : 'a prop) (x : 'a) : 'a list =
   solve' opset (e_rel_list1 rel) (fun path -> let last_of_path = last path
 					      in predicate last_of_path) [x] ;;
@@ -232,13 +232,13 @@ let rec solve_puzzle (p : ('c, 'm) puzzle) (opset : ('c list, 's) set_operations
   solve_path' opset (fun x -> List.map (p.move x) (p.possible_moves x)) (p.final) c ;;
 
 
-  (* For the sake of comic relief!!! *)
+(* For the sake of comic relief!!! *)
 let () =
   Printf.printf "\nThis %s puzzle sure is complicated stuff!\n" "Klotski";
   Printf.printf "\n"
 
 
-		(* Here begins Part B of the Klotski Project. *)
+(* Here begins Part B of the Klotski Project. *)
 
 type piece_kind = S|H|V|C|X ;;
 
@@ -285,7 +285,7 @@ let query_piece (bd : board) ((x, y) : (int * int)) : piece option =
   with Invalid_argument e -> None ;;
 
 
-  (* I thought this function might be helpful in case we need to start adding more elements to an array. *)
+(* I thought this function might be helpful in case we need to start adding more elements to an array. *)
 let makeNewArray (old_array : 'a array) (element : 'a) : 'a array =
   let length = Array.length old_array
   in let new_array = Array.make (length + 1) element in
@@ -307,7 +307,7 @@ let get_positions (p : piece) (bd : board) : ((int * int) list) =
   !accumulator ;;
 
 
-  (* I will need to use the shift_right and shift_left functions in the move_piece function that follows. *)
+(* I will need to use the shift_right and shift_left functions in the move_piece function that follows. *)
 let shift_right (arr : 'a array) : 'a array =
   let length = Array.length arr in
   let last = arr.(length - 1) in
@@ -384,7 +384,7 @@ let tupleList (listOfPairs : ('a * 'a) list) : ('a * 'a list) list  =
   in tuple_List' nList listOfPairs ;;
 
 
-  (* This function was challenging because of the subtle mixture of imperative and functional programming combined 
+(* This function was challenging because of the subtle mixture of imperative and functional programming combined 
    within a single function. *)
 let rec shiftArrayRows (dir : int) (arr : 'a array array) (tuple_list : (int * int list) list) : 'a array array =
   match dir with
@@ -417,6 +417,7 @@ let rec shiftArrayRows (dir : int) (arr : 'a array array) (tuple_list : (int * i
   |_      -> arr ;;
 
 
+
 let rec updateArrayValues (newValue : 'a) (arr : 'a array array) (positions : (int * int) list) =
   let arrCopy = Array.map Array.copy arr in
   match positions with
@@ -425,7 +426,7 @@ let rec updateArrayValues (newValue : 'a) (arr : 'a array array) (positions : (i
 		         arrCopy.(i).(j) <- newValue ;
 		       end;  updateArrayValues newValue arrCopy tail ;;
 
-  
+
 let move_piece (bd : board) (p : piece) (dir : direction) : board option =  
   let new_board = Array.map Array.copy bd in
   let positions = get_positions p bd in
