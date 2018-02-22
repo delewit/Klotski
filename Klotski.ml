@@ -346,6 +346,9 @@ let shiftLeft_subArray (arr : 'a array) (lower_index : int) (upper_index : int) 
     end ;;
 
 
+(* May or may not need the transposeMatrix function for this project.  
+   But there's no denying that it's a really cool function, and definitely 
+   has some important practical applications. *)
 let transposeMatrix (some_array : 'a array array) : 'a array array =
   let rec transposeList (some_list : 'a list list) : 'a list list =
     let rec transposeList' (some_list : 'a list list) : 'a list =
@@ -447,5 +450,6 @@ let move_piece (bd : board) (p : piece) (dir : direction) : board option =
 	   let new_board'' = updateArrayValues p new_board' positions'' in
 	   Some new_board''
   else None ;;
+
 
 
