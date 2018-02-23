@@ -474,7 +474,7 @@ let first (x, _, _) = x ;;
 
 let second (_, y, _) = y ;;
 
-let third (_, _, z) = z ;;
+(* let third (_, _, z) = z ;; *)
 
 
 let possible_moves (board : board) : move list =
@@ -493,9 +493,12 @@ let possible_moves (board : board) : move list =
 			|None      ->  create_MoveList tail
 			|Some y    ->  let p = first head in
 				       let d = second head in
-				       let b = third head in
-				       (Move (p, d, b)) :: create_MoveList tail in 
+				       (* let b = third head in *)
+				       (Move (p, d, y)) :: create_MoveList tail in 
   create_MoveList all_possible_moves ;;
+
+
+let klotski : (board, move) puzzle = { move; possible_moves; final } ;;
 
 
 
