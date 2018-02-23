@@ -418,7 +418,8 @@ let rec shiftArrayRows (dir : int) (arr : 'a array array) (tuple_list : (int * i
 
 
 
-let rec updateArrayValues (newValue : 'a) (arr : 'a array array) (positions : (int * int) list) =
+let rec updateArrayValues (newValue : 'a) (arr : 'a array array) (positions : (int * int) list)
+    : 'a array array =
   let arrCopy = Array.map Array.copy arr in
   match positions with
   |[]               -> arrCopy
@@ -451,6 +452,50 @@ let move_piece (bd : board) (p : piece) (dir : direction) : board option =
 	   let new_board'' = updateArrayValues p new_board' positions'' in
 	   Some new_board''
   else None ;;
+
+
+let move_piece' ((p, d, b) : piece * direction * board) : board option = move_piece b p d ;; 
+
+
+(* Here's a good helper function to help with the possible_moves function that comes next! *)
+let all_combinations (x : 'a list) (y : 'b list) : ('a * 'b) list =
+  let rec all_combinations' (a : 'a list) (b : 'b list) : ('a * 'b) list list =
+    let rec helper (a' : 'a) (b' : 'b list) : ('a * 'b) list =
+      match b' with
+      |[]          ->  []
+      |h :: t      -> (a', h) :: helper a' t in
+    match a with
+    |[]         -> []
+    |h :: t     -> (helper h b) :: all_combinations' t b in
+  List.flatten begin all_combinations' x y end ;;
+
+
+let first (x, _, _) = x ;;
+
+let second (_, y, _) = y ;;
+
+let third (_, _, z) = z ;;
+
+
+let possible_moves (board : board) : move list =
+  let up = {drow = -1; dcol = 0} in
+  let down = {drow = 1; dcol = 0} in
+  let right = {drow = 0; dcol = 1} in
+  let left = {drow = 0; dcol = -1} in
+  let all_directions = [up; down; right; left] in 
+  let all_possible_moves =
+    List.map (fun ((i, j), k) -> (i, j, k))
+	     ( all_combinations (all_combinations all_pieces all_directions) [board] ) in
+  let rec create_MoveList (x : (piece * direction * board) list) : move list =
+    match x with
+    |[]             ->  []
+    |head :: tail   ->  match move_piece' head with
+			|None      ->  create_MoveList tail
+			|Some y    ->  let p = first head in
+				       let d = second head in
+				       let b = third head in
+				       (Move (p, d, b)) :: create_MoveList tail in 
+  create_MoveList all_possible_moves ;;
 
 
 
