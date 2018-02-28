@@ -1,5 +1,5 @@
 (* OCaml functions written by Douglas Lewit of Oakton Community College and Northeastern Illinois University. 
-   Everything in this program file is up-to-date as of February 23, 2018. *)
+   Everything in this program file is up-to-date as of February 28, 2018. *)
 
 exception NotFound ;;
 
@@ -499,6 +499,15 @@ let possible_moves (board : board) : move list =
 
 
 let klotski : (board, move) puzzle = { move; possible_moves; final } ;;
+
+
+let (^>) (x : piece_kind) (y : piece_kind) : bool =
+  match x, y with
+  |S, (H|V|C|X)     ->  true
+  |H, (V|C|X)       ->  true
+  |V, (C|X)         ->  true
+  |C, X             ->  true
+  |_, _             ->  false ;;
 
 
 
