@@ -1,6 +1,10 @@
 (* OCaml functions written by Douglas Lewit of Oakton Community College and Northeastern Illinois University. 
    Everything in this program file is up-to-date as of February 28, 2018. *)
 
+#require "graphics" ;;
+
+open Graphics ;;
+
 exception NotFound ;;
 
 type 'e rel = 'e -> 'e list ;;
@@ -499,6 +503,42 @@ let possible_moves (board : board) : move list =
 
 
 let klotski : (board, move) puzzle = { move; possible_moves; final } ;;
+
+
+let display_board (board : board) : unit =
+  open_graph " 600x700";
+  let nRows = Array.length board in
+  let nCols = Array.length board.(0) in
+  for i=0 to nRows - 1 do
+    for j=0 to nCols - 1 do
+      let row = 100 * (j+1) in
+      let col = 600 - 100*(i+1) in 
+      match board.(i).(j) with
+      |(V, 0)    ->  set_color 0xFFFF00;
+                     fill_rect row col 100 100;
+      |(S, 0)    ->  set_color 0xFF7F00;
+                     fill_rect row col 100 100;
+      |(V, 1)    ->  set_color 0x00FF00;
+                     fill_rect row col 100 100;
+      |(V, 2)    ->  set_color 0x980000;
+                     fill_rect row col 100 100;
+      |(H, 0)    ->  set_color 0x9FC000;
+                     fill_rect row col 100 100;
+      |(V, 3)    ->  set_color 0x007FFF;
+                     fill_rect row col 100 100;
+      |(C, 0)    ->  set_color 0xFFBEBE;
+                     fill_rect row col 100 100;
+      |(C, 1)    ->  set_color 0xBEFFBE;
+                     fill_rect row col 100 100;
+      |(C, 2)    ->  set_color 0xBEBEFF;
+                     fill_rect row col 100 100;
+      |(C, 3)    ->  set_color 0xC8C8C8;
+                     fill_rect row col 100 100;
+      |_         ->  set_color 0x000000;
+                     fill_rect row col 100 100;
+    done;
+  done ;;
+
 
 
 let (^>) (x : piece_kind) (y : piece_kind) : bool =
