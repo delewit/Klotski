@@ -1,5 +1,5 @@
 (* OCaml functions written by Douglas Lewit of Oakton Community College and Northeastern Illinois University. 
-   Everything in this program file is up-to-date as of March 1, 2018. *)
+   Everything in this program file is up-to-date as of March 2, 2018. *)
 
 #require "graphics" ;;
 
@@ -96,9 +96,9 @@ let flat_map (rel_function : 'e rel) : 'e list -> 'e list =
   (* The variable "x" in my composition function is really a dummy variable. *)
   let composition (f : 'a -> 'b) (g : 'c -> 'a) (x : 'c) : 'b = f (g x)
   in composition flatten flat_map' (* This is an example of "partial function application" 
-                                                  and also function composition. *) ;;
+                                      and also function composition. *) ;;
 
-  (* iter_rel should be used like this: (iter_rel near 5) 2 --> the interpretation is that (iter_rel near 5) 2 should 
+(* iter_rel should be used like this: (iter_rel near 5) 2 --> the interpretation is that (iter_rel near 5) 2 should 
    yield the same result as flat_map near (flat_map near( flat_map near( flat_map near (near 2)))).  
    Try it for yourself!  By the way, this function was NOT easy to write!!! *)
 let iter_rel (rel_func : 'e rel) (i : int) : 'e rel =
@@ -548,13 +548,22 @@ let display_board (board : board) : unit =
   done ;;
 
 
+(* The following two functions are necessary to compare two different values of type piece_kind. *)
+let (^<) (x : piece_kind) (y : piece_kind) : bool =
+  match x, y with
+  |X, (V|C|H|S)     -> true
+  |V, (C|H|S)       -> true
+  |C, (H|S)         -> true
+  |H, S             -> true
+  |_, _             -> false ;;
+
 
 let (^>) (x : piece_kind) (y : piece_kind) : bool =
   match x, y with
-  |S, (H|V|C|X)     ->  true
-  |H, (V|C|X)       ->  true
-  |V, (C|X)         ->  true
-  |C, X             ->  true
+  |S, (H|C|V|X)     ->  true
+  |H, (C|V|X)       ->  true
+  |C, (V|X)         ->  true
+  |V, X             ->  true
   |_, _             ->  false ;;
 
 
