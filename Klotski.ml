@@ -1,5 +1,5 @@
 (* OCaml functions written by Douglas Lewit of Oakton Community College and Northeastern Illinois University. 
-   Everything in this program file is up-to-date as of February 28, 2018. *)
+   Everything in this program file is up-to-date as of March 1, 2018. *)
 
 #require "graphics" ;;
 
@@ -509,6 +509,14 @@ let display_board (board : board) : unit =
   open_graph " 600x700";
   let nRows = Array.length board in
   let nCols = Array.length board.(0) in
+  set_line_width 10;
+  moveto 100 100;
+  lineto 100 600;
+  lineto 500 600;
+  lineto 500 100;
+  lineto 400 100;
+  moveto 200 100;
+  lineto 100 100;
   for i=0 to nRows - 1 do
     for j=0 to nCols - 1 do
       let row = 100 * (j+1) in
@@ -516,15 +524,15 @@ let display_board (board : board) : unit =
       match board.(i).(j) with
       |(V, 0)    ->  set_color 0xFFFF00;
                      fill_rect row col 100 100;
-      |(S, 0)    ->  set_color 0xFF7F00;
+      |(S, 0)    ->  set_color 0xFF0000;
                      fill_rect row col 100 100;
       |(V, 1)    ->  set_color 0x00FF00;
                      fill_rect row col 100 100;
       |(V, 2)    ->  set_color 0x980000;
                      fill_rect row col 100 100;
-      |(H, 0)    ->  set_color 0x9FC000;
+      |(H, 0)    ->  set_color 0x004099;
                      fill_rect row col 100 100;
-      |(V, 3)    ->  set_color 0x007FFF;
+      |(V, 3)    ->  set_color 0x2F7FFF;
                      fill_rect row col 100 100;
       |(C, 0)    ->  set_color 0xFFBEBE;
                      fill_rect row col 100 100;
