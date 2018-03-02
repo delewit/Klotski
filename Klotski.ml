@@ -1,7 +1,6 @@
 (* OCaml functions written by Douglas Lewit of Oakton Community College and Northeastern Illinois University. 
    Everything in this program file is up-to-date as of March 2, 2018. *)
 
-
 #require "graphics" ;;
 
 open Graphics ;;
