@@ -1,5 +1,5 @@
 (* OCaml functions written by Douglas Lewit of Oakton Community College and Northeastern Illinois University. 
-   Everything in this program file is up-to-date as of March 2, 2018. *)
+   Everything in this program file is up-to-date as of March 3, 2018. *)
 
 #require "graphics" ;;
 
@@ -565,6 +565,29 @@ let (^>) (x : piece_kind) (y : piece_kind) : bool =
   |C, (V|X)         ->  true
   |V, X             ->  true
   |_, _             ->  false ;;
+
+
+
+exception EqualityTest of int ;;
+
+
+(* The next function generates a list of all the indices of a matrix with the condition that 
+   the number of columns of the matrix is one less than the number of rows of the matrix.
+   The argument "k" is the number of rows of the matrix with the assumption that the first 
+   row has index 0. *)
+let matrix_indices k =
+  let rec indices' (m : int) (n : int) (upperLimit : int) : (int * int) list =
+  if m > upperLimit
+  then []
+  else if (n mod upperLimit) = 0
+       then (m + 1, n mod upperLimit) :: indices' (m + 1) (n + 1) upperLimit 
+       else (m, n mod upperLimit) :: indices' m (n + 1) upperLimit in 
+  let rec exceptLast (lst : (int * int) list) : (int * int) list =
+    match lst with
+    |[]      -> raise (failwith "Empty list!")
+    |head :: []     -> []
+    |head :: tail   -> head :: exceptLast tail in
+  exceptLast (indices' (-1) 0 k) ;;
 
 
 
