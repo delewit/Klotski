@@ -568,8 +568,6 @@ let (^>) (x : piece_kind) (y : piece_kind) : bool =
 
 
 
-exception EqualityTest of int ;;
-
 
 (* The next function generates a list of all the indices of a matrix with the condition that 
    the number of columns of the matrix is one less than the number of rows of the matrix.
@@ -588,6 +586,30 @@ let matrix_indices k =
     |head :: []     -> []
     |head :: tail   -> head :: exceptLast tail in
   exceptLast (indices' (-1) 0 k) ;;
+
+
+
+(* Similar to the previous function, "matrix_indices", but this time we don't have to assume 
+   that the number of columns is one less than the number of rows.  This function is more general. 
+   The user provides the number of rows and columns of the matrix.  The function returns all the 
+   indices in row-major order with the assumption that the first row is numbered 0, and that the 
+   first column is similarly numbered 0. *) 
+let general_matrix_indices rows columns =
+  let matrix_indices rows columns = 
+    let f x = if x > rows - 1 
+              then 0 
+              else x + 1 in 
+    let g y = if y > columns - 1 
+              then 0 
+              else y + 1 in 
+    let rec h x y = 
+      if x >= rows && y >= columns 
+      then [] 
+      else if y < columns 
+           then (x, g y) :: h x (g y) 
+           else (f x, g y) :: h (f x) (g y) in 
+    let u x y = (x, y) :: h x y in u 0 0 in  
+    matrix_indices (rows - 1) (columns - 1) ;;
 
 
 
