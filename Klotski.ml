@@ -1,5 +1,5 @@
 (* OCaml functions written by Douglas Lewit of Oakton Community College and Northeastern Illinois University. 
-   Everything in this program file is up-to-date as of March 3, 2018. *)
+   Everything in this program file is up-to-date as of March 4, 2018. *)
 
 #require "graphics" ;;
 
@@ -588,6 +588,32 @@ let matrix_indices k =
     |head :: []     -> []
     |head :: tail   -> head :: exceptLast tail in
   exceptLast (indices' (-1) 0 k) ;;
+
+
+
+(* This function can only be used if certain assumptions are true. 
+   First assumption: board1 and board2 must have the same dimensions.
+   Second assumption: The number of columns must be one less than the number of rows, 
+   which of course is the case for the boards that are used to represent the Klotski Puzzle. 
+ *)
+let boardSet_Compare (board1 : board) (board2 : board) : int = 
+  let rec boardSet_Compare' (board1 : board) (board2 : board) (indices_list : (int * int) list) : int =
+    match indices_list with
+    |[]                  ->  0  (* The two boards are exactly equal. *)
+    |(row, col) :: tail  ->  let pk1 = fst board1.(row).(col) in
+                             let pk2 = fst board2.(row).(col) in
+                             let int1 = snd board1.(row).(col) in
+                             let int2 = snd board2.(row).(col) in
+                             if pk1 ^< pk2
+                             then -1
+                             else if pk1 ^> pk2
+                                  then 1
+                                  else if int1 < int2
+                                       then -1
+                                       else if int1 > int2
+                                            then 1
+                                            else boardSet_Compare' board1 board2 tail 
+  in boardSet_Compare' board1 board2 (matrix_indices (Array.length board1 - 1)) ;;
 
 
 
