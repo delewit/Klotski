@@ -639,3 +639,13 @@ let boardSet_Compare (board1 : board) (board2 : board) : int =
 
 
 
+module BoardSet =
+  Set.Make(
+      struct
+      type t = board
+      let compare b1 b2 = boardSet_Compare b1 b2
+      end
+    ) ;;
+
+
+
