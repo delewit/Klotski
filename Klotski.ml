@@ -649,3 +649,31 @@ module BoardSet =
 
 
 
+(* The function below tests to see if all the boards in some board list can be found in 
+   the board set. *)
+let boards_inSet (boards : board list) (set : BoardSet.t) : bool =
+  let boolean_list = List.map (fun t -> BoardSet.mem t set) boards in
+  List.fold_right (&&) boolean_list true ;;
+
+
+
+(* The function below adds all the boards in some board list to a board set. *)
+let rec boards_Add (boards : board list) (set : BoardSet.t) : BoardSet.t =
+  match boards with
+  |[]             ->  set
+  |head :: tail   ->  boards_Add tail (BoardSet.add head set) ;;
+
+
+
+let solve_klotski = solve_puzzle klotski {empty=BoardSet.empty; add=boards_Add; mem=boards_inSet} ;;
+
+
+
+let initial_board_trivial =
+  [| [| x  ; s  ; s  ; x  |] ;
+     [| x  ; s  ; s  ; x  |] ;
+     [| x  ; x  ; x  ; x  |] ;
+     [| x  ; x  ; x  ; x  |] ;
+     [| x  ; x  ; x  ; x  |] |] ;;
+
+
