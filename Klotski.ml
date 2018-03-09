@@ -23,10 +23,21 @@ type ('configuration, 'move) puzzle =
       final : 'configuration -> bool
     }
 
+
+
+let map (f : 'a -> 'b) (a_list : 'a list) : 'b list =
+  let rec map' (accum : 'b list) (f : 'a -> 'b) (a_list : 'a list) : 'b list = 
+    match a_list with 
+    |[]          -> List.rev accum 
+    |h :: t      -> map' (f h :: accum) f t in 
+  map' [] f a_list ;;
+
+
 module IntSet = Set.Make(struct
 			  type t = int
 			  let compare = Pervasives.compare
 			end)
+
 
 let int_set_ops : (int, IntSet.t) set_operations =
   {
@@ -130,7 +141,7 @@ let solve_path (r : 'a rel) (p : 'a prop) (x : 'a) : 'a list =
     |head :: []    -> head
 			(* The base case for non-empty lists. *)
     |head :: tail  -> last tail (* The general recursive case. *)
-  in solve (fun path -> List.map (fun y -> path @ [y]) (r (last path))) (fun path -> p (last path)) [x] ;;
+  in solve (fun path -> map (fun y -> path @ [y]) (r (last path))) (fun path -> p (last path)) [x] ;;
 
 
 
@@ -222,7 +233,7 @@ let e_rel_list1 (n : 'e rel) (x : 'e list) : 'e list list =
 
 let e_rel_list2 (n : 'e rel) (x : 'e list) : 'e list list =
   let elistList = n (last x)
-  in List.map (fun t -> x @ [t]) elistList ;;
+  in map (fun t -> x @ [t]) elistList ;;
 
 (* Here is Step #11 of the Klotski Puzzle solution guide from the OCaml MOOC. *)
 let solve_path' (opset : ('a list, 'set) set_operations) (rel : 'a rel) (predicate : 'a prop) (x : 'a) : 'a list =
@@ -231,7 +242,7 @@ let solve_path' (opset : ('a list, 'set) set_operations) (rel : 'a rel) (predica
 
 
 let rec solve_puzzle (p : ('c, 'm) puzzle) (opset : ('c list, 's) set_operations) (c : 'c) : 'c list =
-  solve_path' opset (fun x -> List.map (p.move x) (p.possible_moves x)) (p.final) c ;;
+  solve_path' opset (fun x -> map (p.move x) (p.possible_moves x)) (p.final) c ;;
 
 
 (* For the sake of comic relief!!! *)
@@ -362,11 +373,11 @@ let transposeMatrix (some_array : 'a array array) : 'a array array =
     try
       if some_list = []
       then []
-      else (transposeList' some_list) :: (transposeList (List.map List.tl some_list))
+      else (transposeList' some_list) :: (transposeList (map List.tl some_list))
     with Failure f   ->  [] in
   let some_list = Array.to_list (Array.map Array.to_list some_array) in
   let transposed = transposeList some_list in
-  Array.of_list (List.map Array.of_list transposed) ;;
+  Array.of_list (map Array.of_list transposed) ;;
 
 
 let tupleList (listOfPairs : ('a * 'a) list) : ('a * 'a list) list  =
@@ -433,9 +444,9 @@ let rec updateArrayValues (newValue : 'a) (arr : 'a array array) (positions : (i
 let move_piece (bd : board) (p : piece) (dir : direction) : board option =  
   let new_board = Array.map Array.copy bd in
   let positions = get_positions p bd in
-  let positions' = List.map (fun (x, y) -> (x + dir.drow, y)) positions in
-  let positions'' = List.map (fun (x, y) -> (x, y + dir.dcol)) positions' in
-  let pieces = List.map (query_piece bd) positions'' in
+  let positions' = map (fun (x, y) -> (x + dir.drow, y)) positions in
+  let positions'' = map (fun (x, y) -> (x, y + dir.dcol)) positions' in
+  let pieces = map (query_piece bd) positions'' in
   let rec testPieces (p : piece option) (p_list : piece option list) : bool =
     match p_list with
     |[]            -> true
@@ -486,7 +497,7 @@ let possible_moves (board : board) : move list =
   let left = {drow = 0; dcol = -1} in
   let all_directions = [up; down; right; left] in 
   let all_possible_moves =
-    List.map (fun ((i, j), k) -> (i, j, k))
+    map (fun ((i, j), k) -> (i, j, k))
 	     ( all_combinations (all_combinations all_pieces all_directions) [board] ) in
   let rec create_MoveList (x : (piece * direction * board) list) : move list =
     match x with
@@ -567,6 +578,17 @@ let (^>) (x : piece_kind) (y : piece_kind) : bool =
 
 
 
+let (<!) ((pk1, int1) : piece) ((pk2, int2) : piece) : bool =
+  if pk1 ^< pk2
+  then true
+  else if pk1 ^> pk2
+       then false
+       else int1 < int2 ;;
+          
+
+let (>!) (p1 : piece) (p2 : piece) : bool =
+  p2 <! p1 ;;
+
 
 (* The next function generates a list of all the indices of a matrix with the condition that 
    the number of columns of the matrix is one less than the number of rows of the matrix.
@@ -617,26 +639,22 @@ let general_matrix_indices rows columns =
    Second assumption: The number of columns must be one less than the number of rows, 
    which of course is the case for the boards that are used to represent the Klotski Puzzle. 
  *)
-let boardSet_Compare (board1 : board) (board2 : board) : int = 
-  let rec boardSet_Compare' (board1 : board) (board2 : board) (indices_list : (int * int) list) : int =
-    match indices_list with
-    |[]                  ->  0  (* The two boards are exactly equal. *)
-    |(row, col) :: tail  ->  let pk1 = fst board1.(row).(col) in
-                             let pk2 = fst board2.(row).(col) in
-                             let int1 = snd board1.(row).(col) in
-                             let int2 = snd board2.(row).(col) in
-                             if pk1 ^< pk2
-                             then -1
-                             else if pk1 ^> pk2
-                                  then 1
-                                  else if int1 < int2
-                                       then -1
-                                       else if int1 > int2
-                                            then 1
-                                            else boardSet_Compare' board1 board2 tail 
-  in boardSet_Compare' board1 board2 (matrix_indices (Array.length board1 - 1)) ;;
 
+exception Compare_Result of int ;;
 
+let boardSet_Compare (board1 : board) (board2 : board) : int =
+  let nRows = Array.length board1 in
+  let nCols = Array.length board1.(0) in
+  try
+    for i=0 to nRows - 1 do
+      for j=0 to nCols - 1 do
+        if board1.(i).(j) <! board2.(i).(j)
+        then raise (Compare_Result (-1))
+        else if board1.(i).(j) >! board2.(i).(j)
+             then raise (Compare_Result 1)
+        done done; 0
+  with Compare_Result i  -> i ;;
+                          
 
 module BoardSet =
   Set.Make(
@@ -673,6 +691,15 @@ let initial_board_trivial =
 
 
 
-let board_list = solve_klotski initial_board_trivial ;;
+let initial_board_simpler =
+  [| [| x ; s  ; s  ; x |] ;
+     [| x ; s  ; s  ; x |] ;
+     [| x ; c0 ; c1 ; x |] ;
+     [| x ; c2 ; c3 ; x |] ;
+     [| x  ; x  ; x  ; x  |] |] ;;
+
+
+
+let board_list = solve_klotski initial_board_simpler ;;
 
 
