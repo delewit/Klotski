@@ -1,8 +1,6 @@
 (* OCaml functions written by Douglas Lewit of Oakton Community College and Northeastern Illinois University. 
    Everything in this program file is up-to-date as of March 4, 2018. *)
 
-#require "graphics" ;;
-
 open Graphics ;;
 
 exception NotFound ;;
@@ -509,7 +507,8 @@ let display_board (board : board) : unit =
   open_graph " 600x700";
   let nRows = Array.length board in
   let nCols = Array.length board.(0) in
-  set_line_width 10;
+  set_color 0x000000; 
+  set_line_width 14;
   moveto 100 100;
   lineto 100 600;
   lineto 500 600;
@@ -652,17 +651,13 @@ module BoardSet =
 (* The function below tests to see if all the boards in some board list can be found in 
    the board set. *)
 let boards_inSet (boards : board list) (set : BoardSet.t) : bool =
-  let boolean_list = List.map (fun t -> BoardSet.mem t set) boards in
-  List.fold_right (&&) boolean_list true ;;
-
+  let last_board = last boards in
+      BoardSet.mem last_board set ;; 
 
 
 (* The function below adds all the boards in some board list to a board set. *)
-let rec boards_Add (boards : board list) (set : BoardSet.t) : BoardSet.t =
-  match boards with
-  |[]             ->  set
-  |head :: tail   ->  boards_Add tail (BoardSet.add head set) ;;
-
+let boards_Add (boards : board list) (set : BoardSet.t) : BoardSet.t =
+          BoardSet.add (last boards) set ;;
 
 
 let solve_klotski = solve_puzzle klotski {empty=BoardSet.empty; add=boards_Add; mem=boards_inSet} ;;
@@ -672,8 +667,12 @@ let solve_klotski = solve_puzzle klotski {empty=BoardSet.empty; add=boards_Add; 
 let initial_board_trivial =
   [| [| x  ; s  ; s  ; x  |] ;
      [| x  ; s  ; s  ; x  |] ;
-     [| x  ; x  ; x  ; x  |] ;
+     [| x  ; c0  ; c1  ; x  |] ;
      [| x  ; x  ; x  ; x  |] ;
      [| x  ; x  ; x  ; x  |] |] ;;
+
+
+
+let board_list = solve_klotski initial_board_trivial ;;
 
 
