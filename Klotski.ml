@@ -90,18 +90,22 @@ let near : int rel =   (* The default step size here is just 1. *)
 
   (* flat_map returns the function, flat_map'. *)
 let flat_map (rel_function : 'e rel) : 'e list -> 'e list =
-  let rec flatten (lst : 'e list list) : 'e list =
-    match lst with
-    |[]           -> []
-    |head :: tail -> match head with
-		     |[]         -> flatten tail
-		     |hd :: tl   -> hd :: flatten (tl :: tail)
+  let flatten (ls : 'e list list) : 'e list = 
+    let rec flatten_helper (accumulator : 'e list) (lst : 'e list list) : 'e list = 
+      match lst with 
+      |[]            ->  List.rev accumulator 
+      |head :: tail  ->  match head with 
+                         |[]        ->  (flatten_helper [@ocaml.tailcall]) accumulator tail 
+                         |hd :: tl  ->  (flatten_helper [@ocaml.tailcall]) (hd :: accumulator) (tl :: tail) in 
+    flatten_helper [] ls 
   in
-  let rec flat_map' (e_list : 'e list) : 'e list list =
-    match e_list with
-    |[]           -> []
-    |head :: tail -> (rel_function head) :: flat_map' tail
-  in
+  let flat_map' (e_list : 'e list) : 'e list list = 
+    let rec flat_map'' (accum : 'e list list) (e_lst : 'e list) : 'e list list =
+      match e_lst with
+      |[]           ->  accum 
+      |head :: tail ->  (flat_map'' [@ocaml.tailcall]) (rel_function head :: accum) tail
+    in flat_map'' [] e_list
+  in 
   (* The variable "x" in my composition function is really a dummy variable. *)
   let composition (f : 'a -> 'b) (g : 'c -> 'a) (x : 'c) : 'b = f (g x)
   in composition flatten flat_map' (* This is an example of "partial function application" 
@@ -652,7 +656,7 @@ let boardSet_Compare (board1 : board) (board2 : board) : int =
         then raise (Compare_Result (-1))
         else if board1.(i).(j) >! board2.(i).(j)
              then raise (Compare_Result 1)
-        done done; 0
+        done; done; 0
   with Compare_Result i  -> i ;;
                           
 
@@ -695,7 +699,7 @@ let initial_board_simpler =
   [| [| x ; s  ; s  ; x |] ;
      [| x ; s  ; s  ; x |] ;
      [| x ; c0 ; c1 ; x |] ;
-     [| x ; c2 ; c3 ; x |] ;
+     [| x ; c2 ; x ; x |] ;
      [| x  ; x  ; x  ; x  |] |] ;;
 
 
