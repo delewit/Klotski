@@ -1,5 +1,5 @@
 (* OCaml functions written by Douglas Lewit of Oakton Community College and Northeastern Illinois University. 
-   Everything in this program file is up-to-date as of March 4, 2018. *)
+   Everything in this program file is up-to-date as of March 14, 2018. *)
 
 open Graphics ;;
 
@@ -302,15 +302,6 @@ let query_piece (bd : board) ((x, y) : (int * int)) : piece option =
   with Invalid_argument e -> None ;;
 
 
-(* I thought this function might be helpful in case we need to start adding more elements to an array. *)
-let makeNewArray (old_array : 'a array) (element : 'a) : 'a array =
-  let length = Array.length old_array
-  in let new_array = Array.make (length + 1) element in
-     for i=0 to length - 1 do
-       new_array.(i) <- old_array.(i)
-     done; new_array ;;
-
-
 let get_positions (p : piece) (bd : board) : ((int * int) list) =
   let accumulator = ref [] in
   let nrows = Array.length bd in
@@ -324,125 +315,13 @@ let get_positions (p : piece) (bd : board) : ((int * int) list) =
   !accumulator ;;
 
 
-(* I will need to use the shift_right and shift_left functions in the move_piece function that follows. *)
-let shift_right (arr : 'a array) : 'a array =
-  let length = Array.length arr in
-  let last = arr.(length - 1) in
-  for i=length - 1 downto 1 do
-    arr.(i) <- arr.(i - 1)
-  done; arr.(0) <- last; arr ;;
-
-
-let shift_left (arr : 'a array) : 'a array =
-  let length = Array.length arr in
-  let first = arr.(0) in
-  for i=0 to length - 2 do
-    arr.(i) <- arr.(i + 1)
-  done; arr.(length - 1) <- first; arr ;;
-
-
-let shiftRight_subArray (arr : 'a array) (lower_index : int) (upper_index : int) : 'a array =
-  if lower_index < 0 || upper_index > Array.length arr - 1
-  then raise (Invalid_argument "Array index out of bounds exception.")
-  else begin
-      let section1 = Array.sub arr 0 lower_index in
-      let section2 = Array.sub arr lower_index (upper_index - lower_index + 1) in
-      let section3 = Array.sub arr (upper_index + 1) (Array.length arr - upper_index - 1) in
-      Array.concat [Array.concat [section1; shift_right section2]; section3]
-    end ;;
-
-
-let shiftLeft_subArray (arr : 'a array) (lower_index : int) (upper_index : int) : 'a array =
-  if lower_index < 0 || upper_index > Array.length arr - 1
-  then raise (Invalid_argument "Array index out of bounds exception.")
-  else begin
-      let section1 = Array.sub arr 0 lower_index in
-      let section2 = Array.sub arr lower_index (upper_index - lower_index + 1) in
-      let section3 = Array.sub arr (upper_index + 1) (Array.length arr - upper_index - 1) in
-      Array.concat [Array.concat [section1; shift_left section2]; section3]
-    end ;;
-
-
-(* May or may not need the transposeMatrix function for this project.  
-   But there's no denying that it's a really cool function, and definitely 
-   has some important practical applications. *)
-let transposeMatrix (some_array : 'a array array) : 'a array array =
-  let rec transposeList (some_list : 'a list list) : 'a list list =
-    let rec transposeList' (some_list : 'a list list) : 'a list =
-      try
-	match some_list with
-	|[]            ->  []
-	|head :: tail  ->  (List.hd head) :: transposeList' tail
-      with Failure f   ->  [] in
-    try
-      if some_list = []
-      then []
-      else (transposeList' some_list) :: (transposeList (map List.tl some_list))
-    with Failure f   ->  [] in
-  let some_list = Array.to_list (Array.map Array.to_list some_array) in
-  let transposed = transposeList some_list in
-  Array.of_list (map Array.of_list transposed) ;;
-
-
-let tupleList (listOfPairs : ('a * 'a) list) : ('a * 'a list) list  =
-  let rec tuple_List ?accumulator:(accum=[]) (n : 'a) (listOfPairs : ('a * 'a) list) : ('a * 'a list) =
-    match listOfPairs with
-    |[]             -> (n, List.sort compare accum)
-    |head :: tail   -> let first = fst head in
-		       let second = snd head in
-		       if n = first
-		       then tuple_List ~accumulator:(second :: accum) n tail
-		       else tuple_List ~accumulator:(accum) n tail in
-  let rec tuple_List' (n_list : 'a list) (listOfPairs : ('a * 'a) list) : ('a * 'a list) list =
-    match n_list with
-    |[]                 -> []
-    |head :: tail       -> (tuple_List head listOfPairs) :: tuple_List' tail listOfPairs in
-  let nList = List.sort_uniq compare begin List.fold_left (fun x (y, z) -> y :: x) [] listOfPairs end
-  in tuple_List' nList listOfPairs ;;
-
-
-(* This function was challenging because of the subtle mixture of imperative and functional programming combined 
-   within a single function. *)
-let rec shiftArrayRows (dir : int) (arr : 'a array array) (tuple_list : (int * int list) list) : 'a array array =
-  match dir with
-  |(-1)   -> let arrCopy = Array.map Array.copy arr in
-	     begin
-	       match tuple_list with
-	       |[]              -> arrCopy
-	       |head :: tail    ->
-		 begin
-		   let h = fst head in
-		   let index1 = (List.hd (snd head)) in
-		   let index2 = (last (snd head)) in
-		   arrCopy.(h) <- shiftLeft_subArray arrCopy.(h) index1 index2
-		 end;
-		 shiftArrayRows dir arrCopy tail
-	     end
-  |1      -> let arrCopy = Array.map Array.copy arr in
-	     begin
-	       match tuple_list with
-	       |[]              -> arrCopy
-	       |head :: tail    ->
-		 begin
-		   let h = fst head in
-		   let index1 = (List.hd (snd head)) in
-		   let index2 = (last (snd head)) in
-		   arrCopy.(h) <- shiftRight_subArray arrCopy.(h) index1 index2
-		 end;
-		 shiftArrayRows dir arrCopy tail
-	     end
-  |_      -> arr ;;
-
-
-
 let rec updateArrayValues (newValue : 'a) (arr : 'a array array) (positions : (int * int) list)
-    : 'a array array =
-  let arrCopy = Array.map Array.copy arr in
+    : unit = 
   match positions with
-  |[]               -> arrCopy
-  |(i, j) :: tail   -> begin
-		         arrCopy.(i).(j) <- newValue ;
-		       end;  updateArrayValues newValue arrCopy tail ;;
+  |[]               -> ()
+  |(i, j) :: tail   ->
+      arr.(i).(j) <- newValue;
+      (updateArrayValues [@ocaml.tailcall]) newValue arr tail ;;
 
 
 let move_piece (bd : board) (p : piece) (dir : direction) : board option =  
@@ -454,20 +333,22 @@ let move_piece (bd : board) (p : piece) (dir : direction) : board option =
   let rec testPieces (p : piece option) (p_list : piece option list) : bool =
     match p_list with
     |[]            -> true
-    |head :: tail  -> if head = p || head = Some (X, 0)
+    |head :: tail  -> if head = p || head = Some (X, 0) 
 		      then true && testPieces p tail
 		      else false
 
   in
   if testPieces (Some p) pieces
-  then if dir.drow = 0
+  then (* if dir.drow = 0
        then let new_board' = shiftArrayRows dir.dcol new_board
 			     begin tupleList begin union [positions; positions''] end end in
 	    Some new_board'
-       else 
-	   let new_board' = updateArrayValues (X, 0) new_board positions in
-	   let new_board'' = updateArrayValues p new_board' positions'' in
-	   Some new_board''
+       else *)
+    begin 
+    updateArrayValues (X, 0) new_board positions;
+    updateArrayValues p new_board positions'';
+    Some new_board;
+    end
   else None ;;
 
 
@@ -476,15 +357,24 @@ let move_piece' ((p, d, b) : piece * direction * board) : board option = move_pi
 
 (* Here's a good helper function to help with the possible_moves function that comes next! *)
 let all_combinations (x : 'a list) (y : 'b list) : ('a * 'b) list =
-  let rec all_combinations' (a : 'a list) (b : 'b list) : ('a * 'b) list list =
-    let rec helper (a' : 'a) (b' : 'b list) : ('a * 'b) list =
+  let flatten (ls : 'e list list) : 'e list = 
+    let rec flatten_helper (accumulator : 'e list) (lst : 'e list list) : 'e list = 
+      match lst with 
+      |[]            ->  List.rev accumulator 
+      |head :: tail  ->  match head with 
+                         |[]        ->  (flatten_helper [@ocaml.tailcall]) accumulator tail 
+                         |hd :: tl  ->  (flatten_helper [@ocaml.tailcall]) (hd :: accumulator) (tl :: tail) in 
+    flatten_helper [] ls 
+  in 
+  let rec all_combinations' (a : 'a list) (b : 'b list) (accum : ('a * 'b) list list) : ('a * 'b) list list =
+    let rec helper (a' : 'a) (b' : 'b list) (accum : ('a * 'b) list) : ('a * 'b) list =
       match b' with
-      |[]          ->  []
-      |h :: t      -> (a', h) :: helper a' t in
+      |[]          ->  List.rev accum 
+      |h :: t      ->  (helper [@ocaml.tailcall]) a' t ((a', h) :: accum) in
     match a with
-    |[]         -> []
-    |h :: t     -> (helper h b) :: all_combinations' t b in
-  List.flatten begin all_combinations' x y end ;;
+    |[]         -> List.rev accum
+    |h :: t     -> (all_combinations' [@ocaml.tailcall]) t b (helper h b [] :: accum) in
+  flatten begin all_combinations' x y [] end ;;
 
 
 let first (x, _, _) = x ;;
@@ -494,7 +384,7 @@ let second (_, y, _) = y ;;
 (* let third (_, _, z) = z ;; *)
 
 
-let possible_moves (board : board) : move list =
+let possible_moves' (board : board) : move list =
   let up = {drow = -1; dcol = 0} in
   let down = {drow = 1; dcol = 0} in
   let right = {drow = 0; dcol = 1} in
@@ -503,16 +393,22 @@ let possible_moves (board : board) : move list =
   let all_possible_moves =
     map (fun ((i, j), k) -> (i, j, k))
 	     ( all_combinations (all_combinations all_pieces all_directions) [board] ) in
-  let rec create_MoveList (x : (piece * direction * board) list) : move list =
+  let rec create_MoveList (x : (piece * direction * board) list) (acc : move list) : move list =
     match x with
-    |[]             ->  []
+    |[]             ->  acc 
     |head :: tail   ->  match move_piece' head with
-			|None      ->  create_MoveList tail
-			|Some y    ->  let p = first head in
-				       let d = second head in
-				       (* let b = third head in *)
-				       (Move (p, d, y)) :: create_MoveList tail in 
-  create_MoveList all_possible_moves ;;
+			|None      ->  create_MoveList tail acc 
+			|Some y    ->
+                          let p = first head in
+			  let d = second head in
+			  (* let b = third head in *)
+                          (create_MoveList [@ocaml.tailcall]) tail ((Move (p, d, y)) :: acc) in 
+  create_MoveList all_possible_moves [] ;;
+
+
+let possible_moves (board : board) : move list =
+  let potential_moves = possible_moves' board in
+  List.filter (fun (Move (x, y, z)) -> z <> board) potential_moves ;; 
 
 
 let klotski : (board, move) puzzle = { move; possible_moves; final } ;;
@@ -684,26 +580,45 @@ let boards_Add (boards : board list) (set : BoardSet.t) : BoardSet.t =
 
 let solve_klotski = solve_puzzle klotski {empty=BoardSet.empty; add=boards_Add; mem=boards_inSet} ;;
 
-
-
+  
 let initial_board_trivial =
   [| [| x  ; s  ; s  ; x  |] ;
      [| x  ; s  ; s  ; x  |] ;
-     [| x  ; c0  ; c1  ; x  |] ;
-     [| x  ; x  ; x  ; x  |] ;
+     [| x  ; x ;  x ; x  |] ;
+     [| x  ; x ;  x ; x  |] ;
      [| x  ; x  ; x  ; x  |] |] ;;
-
 
 
 let initial_board_simpler =
-  [| [| x ; s  ; s  ; x |] ;
-     [| x ; s  ; s  ; x |] ;
-     [| x ; c0 ; c1 ; x |] ;
-     [| x ; c2 ; x ; x |] ;
-     [| x  ; x  ; x  ; x  |] |] ;;
+  [| [|  s ; s  ; x ; x |] ;
+     [|  s ; s  ; x ; x |] ;
+     [|  h ; h  ; x ; x |] ;
+     [| c0 ; x  ; c1; x |] ;
+     [|  x ; x  ; x ; x |] |] ;;
 
 
+
+let startTimer = Unix.gettimeofday () ;;
 
 let board_list = solve_klotski initial_board_simpler ;;
+
+let stopTimer = Unix.gettimeofday () ;;
+
+Printf.printf "It took about %.6f seconds for my program to find a solution!" (stopTimer -. startTimer) ;;
+
+print_endline "\n" ;; 
+
+open_graph " 600x700" ;;
+    
+let repeat (element : 'a) (k : int) : 'a list =
+  let rec repeat' (elem : 'a) (n : int) (acc : 'a list) : 'a list = 
+    if n = 0
+    then acc
+    else (repeat' [@ocaml.tailcall]) elem (n - 1) (elem :: acc) in
+  repeat' element k [] ;;
+                                                   
+List.map (List.iter (fun t -> display_board t; Unix.sleep 1))
+         (repeat board_list 5) ;;
+
 
 
