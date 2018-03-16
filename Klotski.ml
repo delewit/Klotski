@@ -211,6 +211,11 @@ let archive_map (opset : ('a, 'set) set_operations) (rel : 'a rel) ((s, l) : ('s
   (s', l') ;;
 
 
+let rec last = function
+  |[]           -> raise (Invalid_argument "Bad arg!")
+  |head :: []   -> head
+  |head :: tail -> last tail ;;
+  
 
 (* Here is Step #10 of the Klotski Puzzle solution guide from the OCaml MOOC. *)
 let solve' (opset : ('a, 'set) set_operations) (rel : 'a rel) (predicate : 'a prop) (x : 'a) : 'a =
@@ -218,12 +223,6 @@ let solve' (opset : ('a, 'set) set_operations) (rel : 'a rel) (predicate : 'a pr
     loop (fun (x, y) -> exists predicate y) (fun (x, y) -> archive_map opset rel' (x, y)) (s, l)
   in let (s, l) = archive_map' rel (opset.empty, [x])
      in find predicate l ;;
-
-
-let rec last = function
-  |[]           -> raise (Invalid_argument "Bad arg!")
-  |head :: []   -> head
-  |head :: tail -> last tail ;;
 
 
 let e_rel_list1 (n : 'e rel) (x : 'e list) : 'e list list =
@@ -302,13 +301,17 @@ let query_piece (bd : board) ((x, y) : (int * int)) : piece option =
   with Invalid_argument e -> None ;;
 
 
+let pieceEquals ((pk1, int1) : piece) ((pk2, int2) : piece) : bool =
+  pk1 = pk2 && int1 = int2 ;;
+
+
 let get_positions (p : piece) (bd : board) : ((int * int) list) =
   let accumulator = ref [] in
   let nrows = Array.length bd in
   let ncols = Array.length bd.(0) in
   for i=0 to nrows - 1 do
     for j=0 to ncols - 1 do
-      if p = bd.(i).(j)
+      if pieceEquals p bd.(i).(j)
       then accumulator := (i, j) :: !accumulator
     done;
   done;
@@ -327,32 +330,24 @@ let rec updateArrayValues (newValue : 'a) (arr : 'a array array) (positions : (i
 let move_piece (bd : board) (p : piece) (dir : direction) : board option =  
   let new_board = Array.map Array.copy bd in
   let positions = get_positions p bd in
-  let positions' = map (fun (x, y) -> (x + dir.drow, y)) positions in
-  let positions'' = map (fun (x, y) -> (x, y + dir.dcol)) positions' in
-  let pieces = map (query_piece bd) positions'' in
-  let rec testPieces (p : piece option) (p_list : piece option list) : bool =
+  let positions' = map (fun (x, y) -> (x + dir.drow, y + dir.dcol)) positions
+  in let pieces = map (query_piece bd) positions' in  
+  let rec testPieces (p : piece) (p_list : piece option list) : bool =
     match p_list with
-    |[]            -> true
-    |head :: tail  -> if head = p || head = Some (X, 0) 
-		      then true && testPieces p tail
-		      else false
-
+    |[]               -> true
+    |Some p' :: tail  -> if p' = p || p' = (X, 0) 
+			 then testPieces p tail
+			 else false
+    |None :: tail     -> false 
   in
-  if testPieces (Some p) pieces
-  then (* if dir.drow = 0
-       then let new_board' = shiftArrayRows dir.dcol new_board
-			     begin tupleList begin union [positions; positions''] end end in
-	    Some new_board'
-       else *)
+  if testPieces p pieces
+  then 
     begin 
     updateArrayValues (X, 0) new_board positions;
-    updateArrayValues p new_board positions'';
+    updateArrayValues p new_board positions';
     Some new_board;
     end
   else None ;;
-
-
-let move_piece' ((p, d, b) : piece * direction * board) : board option = move_piece b p d ;; 
 
 
 (* Here's a good helper function to help with the possible_moves function that comes next! *)
@@ -401,7 +396,7 @@ let possible_moves' (board : board) : move list =
     match x with
     |[]             ->  acc 
     |(p, d) :: tail   ->
-      match move_piece' (p, d, board) with
+      match move_piece board p d with
       |None      ->  create_MoveList tail acc 
       |Some y    ->
         (create_MoveList [@ocaml.tailcall]) tail ((Move (p, d, y)) :: acc) in 
@@ -595,8 +590,8 @@ let initial_board_simpler =
   [| [|  s ; s  ; x ; x |] ;
      [|  s ; s  ; x ; x |] ;
      [|  h ; h  ; x ; x |] ;
-     [| c0 ; x  ; c1; x |] ;
-     [|  x ; x  ; x ; x |] |] ;;
+     [|  c0; c1 ; x; x |] ;
+     [|  x ;  x ; x ; x |] |] ;;
 
 
 let repeat (element : 'a) (k : int) : 'a list =
@@ -606,7 +601,5 @@ let repeat (element : 'a) (k : int) : 'a list =
     else (repeat' [@ocaml.tailcall]) elem (n - 1) (elem :: acc) in
   repeat' element k [] ;;
                                                    
-
-
 
 

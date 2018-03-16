@@ -1,6 +1,10 @@
 test: Tests
 	./Tests
 
+profile: Klotski_Profiling
+	./$<
+	gprof $<
+
 PKGS = -package graphics -package unix -package oUnit -linkpkg
 
 Tests: Klotski.ml Tests.ml
@@ -17,3 +21,6 @@ Klotski.cmo: Klotski.ml
 
 Klotski_Solver:  Klotski.ml UseKlotski.ml
 	ocamlfind ocamlopt -o $@ $(PKGS) $^
+
+Klotski_Profiling:  Klotski.ml Profile_Klotski.ml
+	ocamlfind ocamlopt -p -o $@ $(PKGS) $^
