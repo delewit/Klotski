@@ -384,26 +384,28 @@ let second (_, y, _) = y ;;
 (* let third (_, _, z) = z ;; *)
 
 
-let possible_moves' (board : board) : move list =
-  let up = {drow = -1; dcol = 0} in
-  let down = {drow = 1; dcol = 0} in
-  let right = {drow = 0; dcol = 1} in
-  let left = {drow = 0; dcol = -1} in
-  let all_directions = [up; down; right; left] in 
-  let all_possible_moves =
-    map (fun ((i, j), k) -> (i, j, k))
-	     ( all_combinations (all_combinations all_pieces all_directions) [board] ) in
-  let rec create_MoveList (x : (piece * direction * board) list) (acc : move list) : move list =
+let up = {drow = -1; dcol = 0} ;;
+  
+let down = {drow = 1; dcol = 0} ;;
+  
+let right = {drow = 0; dcol = 1} ;;
+  
+let left = {drow = 0; dcol = -1} ;;
+  
+let all_directions = [up; down; right; left] ;;
+
+let all_moves = all_combinations all_pieces all_directions ;; 
+  
+let possible_moves' (board : board) : move list =  
+  let rec create_MoveList (x : (piece * direction) list) (acc : move list) : move list =
     match x with
     |[]             ->  acc 
-    |head :: tail   ->  match move_piece' head with
-			|None      ->  create_MoveList tail acc 
-			|Some y    ->
-                          let p = first head in
-			  let d = second head in
-			  (* let b = third head in *)
-                          (create_MoveList [@ocaml.tailcall]) tail ((Move (p, d, y)) :: acc) in 
-  create_MoveList all_possible_moves [] ;;
+    |(p, d) :: tail   ->
+      match move_piece' (p, d, board) with
+      |None      ->  create_MoveList tail acc 
+      |Some y    ->
+        (create_MoveList [@ocaml.tailcall]) tail ((Move (p, d, y)) :: acc) in 
+  create_MoveList all_moves [] ;;
 
 
 let possible_moves (board : board) : move list =
@@ -597,19 +599,6 @@ let initial_board_simpler =
      [|  x ; x  ; x ; x |] |] ;;
 
 
-
-let startTimer = Unix.gettimeofday () ;;
-
-let board_list = solve_klotski initial_board_simpler ;;
-
-let stopTimer = Unix.gettimeofday () ;;
-
-Printf.printf "It took about %.6f seconds for my program to find a solution!" (stopTimer -. startTimer) ;;
-
-print_endline "\n" ;; 
-
-open_graph " 600x700" ;;
-    
 let repeat (element : 'a) (k : int) : 'a list =
   let rec repeat' (elem : 'a) (n : int) (acc : 'a list) : 'a list = 
     if n = 0
@@ -617,8 +606,7 @@ let repeat (element : 'a) (k : int) : 'a list =
     else (repeat' [@ocaml.tailcall]) elem (n - 1) (elem :: acc) in
   repeat' element k [] ;;
                                                    
-List.map (List.iter (fun t -> display_board t; Unix.sleep 1))
-         (repeat board_list 5) ;;
+
 
 
 

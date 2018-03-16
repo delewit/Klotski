@@ -1,7 +1,7 @@
 test: Tests
 	./Tests
 
-PKGS = -package graphics -package oUnit -linkpkg
+PKGS = -package graphics -package unix -package oUnit -linkpkg
 
 Tests: Klotski.ml Tests.ml
 	ocamlfind ocamlopt -o $@ $(PKGS) $^
@@ -14,3 +14,6 @@ Klotski.byte: Klotski.ml
 
 Klotski.cmo: Klotski.ml
 	ocamlfind ocamlc -c -o $@ $(PKGS) $^
+
+Klotski_Solver:  Klotski.ml UseKlotski.ml
+	ocamlfind ocamlopt -o $@ $(PKGS) $^
