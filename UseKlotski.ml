@@ -4,7 +4,7 @@ open Klotski ;;
 
 let startTimer = Unix.gettimeofday () ;;
 
-let board_list = solve_klotski initial_board_simpler ;;
+let board_list = reverse begin solve_klotski initial_board_simpler end ;;
 
 let stopTimer = Unix.gettimeofday () ;;
 

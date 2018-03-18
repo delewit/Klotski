@@ -24,7 +24,20 @@ type ('configuration, 'move) puzzle =
     }
 
 
+let rec last = function
+  |[]           -> raise (Invalid_argument "Bad arg!")
+  |head :: []   -> head
+  |head :: tail -> last tail ;;
 
+
+(* Tail-recursive reverse function on lists.  I'm not sure if List.rev is tail-recursive or not.  Maybe? *)
+let rec reverse ?acc:((accum:'a list)=[]) (a_list : 'a list) : 'a list =
+  match a_list with
+  |[]            ->  accum
+  |head :: tail  ->  (reverse [@ocaml.tailcall]) ~acc:(head :: accum) tail ;;
+
+
+(* Tail-recursive map function on lists.  I'm not sure if List.map is tail-recursive or not.  Maybe? *)
 let map (f : 'a -> 'b) (a_list : 'a list) : 'b list =
   let rec map' (accum : 'b list) (f : 'a -> 'b) (a_list : 'a list) : 'b list = 
     match a_list with 
@@ -50,7 +63,7 @@ let int_set_ops : (int, IntSet.t) set_operations =
 let rec loop (p : ('a -> bool)) (f : ('a -> 'a)) (x : 'a) : 'a =
   match p x with
   |true     ->  x
-  |false    ->  loop p f (f x) ;;
+  |false    ->  (loop [@ocaml.tailcall]) p f (f x) ;;
 
 
 let rec loop' (p : ('a -> bool)) (f : ('a -> 'a)) (x : 'a) : 'a list =
@@ -63,17 +76,19 @@ let rec loop' (p : ('a -> bool)) (f : ('a -> 'a)) (x : 'a) : 'a list =
 let rec exists (p : ('a -> bool)) (ls : 'a list) : bool =
   match ls with
   |[]           -> false
-  |head :: tail -> if p head
-		   then true
-		   else exists p tail ;;
+  |head :: tail ->
+    if p head
+    then true
+    else exists p tail ;;
 
 
 let rec find (p : ('a -> bool)) (ls : 'a list) : 'a =
   match ls with
   |[]            -> raise NotFound
-  |head :: tail  -> if p head
-		    then head
-		    else find p tail ;;
+  |head :: tail  ->
+    if p head
+    then head
+    else (find [@ocaml.tailcall]) p tail ;;
 
 (* near returns the function, near'. *)
 let near : int rel =   (* The default step size here is just 1. *)
@@ -138,15 +153,8 @@ let solve (r : 'a rel) (p : 'a prop) (x : 'a) : 'a =
 
 (* The correct solve_path function needed to solve the Klotski Puzzle problem. *)
 let solve_path (r : 'a rel) (p : 'a prop) (x : 'a) : 'a list =
-  let rec last (lst : 'a list) : 'a =
-    match lst with
-    |[]            -> raise (invalid_arg "Bad argument")
-			    (* The base case for empty lists. *)
-    |head :: []    -> head
-			(* The base case for non-empty lists. *)
-    |head :: tail  -> last tail (* The general recursive case. *)
-  in solve (fun path -> map (fun y -> path @ [y]) (r (last path))) (fun path -> p (last path)) [x] ;;
-
+  solve (fun path -> map (fun y -> List.rev_append (reverse path) [y]) (r (last path)))
+	(fun path -> p (last path)) [x] ;;
 
 
   (* The following two functions can be used to instantiate records of type ('a, 'a list) set_operations. *)
@@ -209,12 +217,6 @@ let archive_map (opset : ('a, 'set) set_operations) (rel : 'a rel) ((s, l) : ('s
   let s' = List.fold_left (fun set element -> opset.add element set) s l'
   in
   (s', l') ;;
-
-
-let rec last = function
-  |[]           -> raise (Invalid_argument "Bad arg!")
-  |head :: []   -> head
-  |head :: tail -> last tail ;;
   
 
 (* Here is Step #10 of the Klotski Puzzle solution guide from the OCaml MOOC. *)
@@ -225,23 +227,32 @@ let solve' (opset : ('a, 'set) set_operations) (rel : 'a rel) (predicate : 'a pr
      in find predicate l ;;
 
 
-let e_rel_list1 (n : 'e rel) (x : 'e list) : 'e list list =
-  let elistList = n (last x)
+let e_rel_list1 (f : 'e rel) (x : 'e list) : 'e list list =
+  let elistList = f (last x)
   in let rec appendLists (x1 : 'a list) (x2 : 'a list) (accum : 'a list list) : 'a list list =
        match x2 with
-       |[]           -> List.rev accum
-       |head :: tail -> appendLists x1 tail ((x1 @ [head]) :: accum)
+       |[]           -> accum
+       |head :: tail -> appendLists x1 tail ((List.rev_append (reverse x1) [head]) :: accum)
      in appendLists x elistList [] ;;
 
 
-let e_rel_list2 (n : 'e rel) (x : 'e list) : 'e list list =
-  let elistList = n (last x)
-  in map (fun t -> x @ [t]) elistList ;;
+let e_rel_list2 (f : 'e rel) (x : 'e list) : 'e list list =
+  let elistList = f (last x)
+  in map (fun t -> List.rev_append (reverse x) [t]) elistList ;;
+
+
+(* Similar to the last two e_rel_list functions, except this time we're building up 
+   sublists in the reverse order using cons rather than an append operation. 
+   I'm struggling to make this algorithm more efficient! *)
+let e_rel_list3 (f : 'e rel) (e_list : 'e list) : 'e list list =
+  let e_list' = f (List.hd e_list) in
+  List.fold_left (fun x y -> (y :: e_list) :: x) [] e_list' ;;
+
 
 (* Here is Step #11 of the Klotski Puzzle solution guide from the OCaml MOOC. *)
 let solve_path' (opset : ('a list, 'set) set_operations) (rel : 'a rel) (predicate : 'a prop) (x : 'a) : 'a list =
-  solve' opset (e_rel_list1 rel) (fun path -> let last_of_path = last path
-					      in predicate last_of_path) [x] ;;
+  solve' opset (e_rel_list3 rel) (fun path -> let head_of_path = List.hd path
+					      in predicate head_of_path) [x] ;;
 
 
 let rec solve_puzzle (p : ('c, 'm) puzzle) (opset : ('c list, 's) set_operations) (c : 'c) : 'c list =
@@ -490,7 +501,7 @@ let (>!) (p1 : piece) (p2 : piece) : bool =
 (* The next function generates a list of all the indices of a matrix with the condition that 
    the number of columns of the matrix is one less than the number of rows of the matrix.
    The argument "k" is the number of rows of the matrix with the assumption that the first 
-   row has index 0. *)
+   row has index 0. BELONGS IN ATTIC.ML!!! *)
 let matrix_indices k =
   let rec indices' (m : int) (n : int) (upperLimit : int) : (int * int) list =
   if m > upperLimit
@@ -511,7 +522,7 @@ let matrix_indices k =
    that the number of columns is one less than the number of rows.  This function is more general. 
    The user provides the number of rows and columns of the matrix.  The function returns all the 
    indices in row-major order with the assumption that the first row is numbered 0, and that the 
-   first column is similarly numbered 0. *) 
+   first column is similarly numbered 0. BELONGS IN ATTIC.ML!!! *) 
 let general_matrix_indices rows columns =
   let matrix_indices rows columns = 
     let f x = if x > rows - 1 
@@ -566,13 +577,13 @@ module BoardSet =
 (* The function below tests to see if all the boards in some board list can be found in 
    the board set. *)
 let boards_inSet (boards : board list) (set : BoardSet.t) : bool =
-  let last_board = last boards in
-      BoardSet.mem last_board set ;; 
+  let first_board = List.hd boards in
+      BoardSet.mem first_board set ;; 
 
 
 (* The function below adds all the boards in some board list to a board set. *)
 let boards_Add (boards : board list) (set : BoardSet.t) : BoardSet.t =
-          BoardSet.add (last boards) set ;;
+          BoardSet.add (List.hd boards) set ;;
 
 
 let solve_klotski = solve_puzzle klotski {empty=BoardSet.empty; add=boards_Add; mem=boards_inSet} ;;
@@ -589,9 +600,9 @@ let initial_board_trivial =
 let initial_board_simpler =
   [| [|  s ; s  ; x ; x |] ;
      [|  s ; s  ; x ; x |] ;
-     [|  h ; h  ; x ; x |] ;
-     [|  c0; c1 ; x; x |] ;
-     [|  x ;  x ; x ; x |] |] ;;
+     [|  x ; h  ; h ; x |] ;
+     [|  x ; c0 ; x ; x |] ;
+     [|  x ;  x ; c1; x |] |] ;;
 
 
 let repeat (element : 'a) (k : int) : 'a list =
@@ -602,4 +613,20 @@ let repeat (element : 'a) (k : int) : 'a list =
   repeat' element k [] ;;
                                                    
 
+(*  These lines got moved into UseKlotski.ml....
+let startTimer = Unix.gettimeofday () ;;
+  
+let solution_list = reverse begin solve_klotski initial_board_simpler end ;;
+
+let stopTimer = Unix.gettimeofday () ;;
+
+open_graph " 600x700" ;;
+
+List.map (List.iter (fun t -> display_board t; Unix.sleep 1)) (repeat solution_list 5) ;;
+
+Printf.printf "Finding a solution to this puzzle required %.6f seconds.\n"  (stopTimer -. startTimer) ;;
+
+print_newline () ;;
+*)
+  
 
