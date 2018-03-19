@@ -219,12 +219,12 @@ let archive_map (opset : ('a, 'set) set_operations) (rel : 'a rel) ((s, l) : ('s
   (s', l') ;;
   
 
-(* Here is Step #10 of the Klotski Puzzle solution guide from the OCaml MOOC. *)
+(* This version of the solve' function is definitely a little simpler than the previous one.  Unfortunately, 
+   my program still contains a hot spot or bottleneck SOMEWHERE, but where??? 
+ *)
 let solve' (opset : ('a, 'set) set_operations) (rel : 'a rel) (predicate : 'a prop) (x : 'a) : 'a =
-  let archive_map' rel' (s, l) =
-    loop (fun (x, y) -> exists predicate y) (fun (x, y) -> archive_map opset rel' (x, y)) (s, l)
-  in let (s, l) = archive_map' rel (opset.empty, [x])
-     in find predicate l ;;
+  let (s, l) = loop (fun (x, y) -> exists predicate y) (fun (x, y) -> archive_map opset rel (x, y)) (opset.empty, [x])
+  in find predicate l ;;
 
 
 let e_rel_list1 (f : 'e rel) (x : 'e list) : 'e list list =
@@ -255,7 +255,7 @@ let solve_path' (opset : ('a list, 'set) set_operations) (rel : 'a rel) (predica
 					      in predicate head_of_path) [x] ;;
 
 
-let rec solve_puzzle (p : ('c, 'm) puzzle) (opset : ('c list, 's) set_operations) (c : 'c) : 'c list =
+let solve_puzzle (p : ('c, 'm) puzzle) (opset : ('c list, 's) set_operations) (c : 'c) : 'c list =
   solve_path' opset (fun x -> map (p.move x) (p.possible_moves x)) (p.final) c ;;
 
 
