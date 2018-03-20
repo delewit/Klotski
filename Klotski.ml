@@ -103,7 +103,8 @@ let near : int rel =   (* The default step size here is just 1. *)
     sequence lower_bound upper_bound
   in near' (* Here we have an example of "partial function application". *) ;;
 
-  (* flat_map returns the function, flat_map'. *)
+  
+(* flat_map returns the function, flat_map'. *)
 let flat_map (rel_function : 'e rel) : 'e list -> 'e list =
   let flatten (ls : 'e list list) : 'e list = 
     let rec flatten_helper (accumulator : 'e list) (lst : 'e list list) : 'e list = 
@@ -125,6 +126,7 @@ let flat_map (rel_function : 'e rel) : 'e list -> 'e list =
   let composition (f : 'a -> 'b) (g : 'c -> 'a) (x : 'c) : 'b = f (g x)
   in composition flatten flat_map' (* This is an example of "partial function application" 
                                       and also function composition. *) ;;
+  
 
 (* iter_rel should be used like this: (iter_rel near 5) 2 --> the interpretation is that (iter_rel near 5) 2 should 
    yield the same result as flat_map near (flat_map near( flat_map near( flat_map near (near 2)))).  
@@ -132,7 +134,7 @@ let flat_map (rel_function : 'e rel) : 'e list -> 'e list =
 let iter_rel (rel_func : 'e rel) (i : int) : 'e rel =
   let rec f x n = if n = 1
 		  then x
-		  else f (x |> flat_map rel_func) (n - 1)
+		  else (f [@ocaml.tailcall]) (x |> flat_map rel_func) (n - 1)
   in let g k = f (rel_func k) i
      in g ;;
 
@@ -600,9 +602,9 @@ let initial_board_trivial =
 let initial_board_simpler =
   [| [|  s ; s  ; x ; x |] ;
      [|  s ; s  ; x ; x |] ;
-     [|  x ; h  ; h ; x |] ;
-     [|  x ; c0 ; x ; x |] ;
-     [|  x ;  x ; c1; x |] |] ;;
+     [|  x ; h  ; h ; c2|] ;
+     [|  x ; x  ; c0; x |] ;
+     [|  x ; x  ; c1; x |] |] ;;
 
 
 let repeat (element : 'a) (k : int) : 'a list =
