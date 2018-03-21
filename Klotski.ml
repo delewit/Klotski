@@ -136,7 +136,7 @@ let solve_path (r : 'a rel) (p : 'a prop) (x : 'a) : 'a list =
 
 
 
-  (* The following two functions can be used to instantiate records of type ('a, 'a list) set_operations. *)
+(* The following two functions can be used to instantiate records of type ('a, 'a list) set_operations. *)
 let rec member (x : 'a) (ls : 'a list) : bool =
   match ls with
   |[]            -> false
@@ -509,7 +509,8 @@ let display_board (board : board) : unit =
   open_graph " 600x700";
   let nRows = Array.length board in
   let nCols = Array.length board.(0) in
-  set_line_width 10;
+  set_color 0x000000;
+  set_line_width 12;
   moveto 100 100;
   lineto 100 600;
   lineto 500 600;
@@ -618,7 +619,8 @@ let general_matrix_indices rows columns =
    Second assumption: The number of columns must be one less than the number of rows, 
    which of course is the case for the boards that are used to represent the Klotski Puzzle. 
  *)
-let boardSet_Compare (board1 : board) (board2 : board) : int = 
+let boardSet_Compare (board1 : board) (board2 : board) : int =
+  let matrix_indexes = general_matrix_indices 5 4 in 
   let rec boardSet_Compare' (board1 : board) (board2 : board) (indices_list : (int * int) list) : int =
     match indices_list with
     |[]                  ->  0  (* The two boards are exactly equal. *)
@@ -635,7 +637,7 @@ let boardSet_Compare (board1 : board) (board2 : board) : int =
                                        else if int1 > int2
                                             then 1
                                             else boardSet_Compare' board1 board2 tail 
-  in boardSet_Compare' board1 board2 (matrix_indices (Array.length board1 - 1)) ;;
+  in boardSet_Compare' board1 board2 matrix_indexes ;;
 
 
 
@@ -675,5 +677,17 @@ let initial_board_trivial =
      [| x  ; x  ; x  ; x  |] ;
      [| x  ; x  ; x  ; x  |] ;
      [| x  ; x  ; x  ; x  |] |] ;;
+
+
+let initial_board_trivial2 = Array.map Array.copy initial_board_trivial ;;
+
+
+initial_board_trivial2.(2).(2) <- c0 ;;
+
+
+initial_board_trivial2.(4).(1) <- c1 ;;
+
+
+initial_board_trivial2.(2).(1) <- c2 ;;
 
 
