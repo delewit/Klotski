@@ -591,10 +591,26 @@ let initial_board_trivial =
 
 let initial_board_simpler =
   [| [|  s ; s  ; x ; x |] ;
-     [|  s ; s  ; x ; x |] ;
-     [|  x ; x  ; c2; x |] ;
-     [|  x ; v2 ; c1; x |] ;
-     [|  x ; v2 ; x ; x |] |] ;;
+     [|  s ; s  ; h ; h |] ;
+     [|  v3; x  ; v1; x |] ;
+     [|  v3; v2 ; v1; x |] ;
+     [|  x ; v2 ;  x; x |] |] ;;
+
+
+let initial_board_simpler2 =
+  [| [| c2 ; s  ; s  ; c1 |] ;
+     [| c0 ; s  ; s  ; c3 |] ;
+     [| v1 ; v2 ; v3 ; v0 |] ;
+     [| v1 ; v2 ; v3 ; v0 |] ;
+     [| x  ; x  ; x  ; x  |] |] ;;
+
+
+let initial_board =
+  [| [| v0 ; s  ; s  ; v1 |];
+     [| v0 ; s  ; s  ; v1 |];
+     [| v2 ; h  ; h  ; v3 |];
+     [| v2 ; c0 ; c1 ; v3 |];
+     [| c2 ; x  ; x  ; c3 |] |] ;;
 
 
 let repeat (element : 'a) (k : int) : 'a list =
