@@ -1,5 +1,5 @@
 (* OCaml functions written by Douglas Lewit of Oakton Community College and Northeastern Illinois University. 
-   Everything in this program file is up-to-date as of March 14, 2018. *)
+   Everything in this program file is up-to-date as of March 20, 2018. *)
 
 open Graphics ;;
 
@@ -469,36 +469,26 @@ let display_board (board : board) : unit =
 
 
 (* The following two functions are necessary to compare two different values of type piece_kind. *)
-let (^<) (x : piece_kind) (y : piece_kind) : bool =
+let (<^>) (x : piece_kind) (y : piece_kind) : int =
   match x, y with
-  |X, (V|C|H|S)     -> true
-  |V, (C|H|S)       -> true
-  |C, (H|S)         -> true
-  |H, S             -> true
-  |_, _             -> false ;;
-
-
-let (^>) (x : piece_kind) (y : piece_kind) : bool =
-  match x, y with
-  |S, (H|C|V|X)     ->  true
-  |H, (C|V|X)       ->  true
-  |C, (V|X)         ->  true
-  |V, X             ->  true
-  |_, _             ->  false ;;
+  |X, (V|C|H|S)     -> -1
+  |V, (C|H|S)       -> -1
+  |C, (H|S)         -> -1
+  |H, S             -> -1 
+  |S, (H|C|V|X)     ->  1
+  |H, (C|V|X)       ->  1
+  |C, (V|X)         ->  1
+  |V, X             ->  1
+  |_, _             ->  0 ;;
 
 
 
-let (<!) ((pk1, int1) : piece) ((pk2, int2) : piece) : bool =
-  if pk1 ^< pk2
-  then true
-  else if pk1 ^> pk2
-       then false
-       else int1 < int2 ;;
-          
-
-let (>!) (p1 : piece) (p2 : piece) : bool =
-  p2 <! p1 ;;
-
+let (<!>) ((pk1, int1) : piece) ((pk2, int2) : piece) : int =
+  let comparison = pk1 <^> pk2 
+  in if comparison = 0
+     then compare int1 int2
+     else comparison ;;
+		       
 
 (* The next function generates a list of all the indices of a matrix with the condition that 
    the number of columns of the matrix is one less than the number of rows of the matrix.
@@ -558,11 +548,11 @@ let boardSet_Compare (board1 : board) (board2 : board) : int =
   try
     for i=0 to nRows - 1 do
       for j=0 to nCols - 1 do
-        if board1.(i).(j) <! board2.(i).(j)
-        then raise (Compare_Result (-1))
-        else if board1.(i).(j) >! board2.(i).(j)
-             then raise (Compare_Result 1)
-        done; done; 0
+	let comparison = board1.(i).(j) <!> board2.(i).(j) in  
+        if comparison <> 0
+        then raise (Compare_Result comparison)
+      done;
+    done; 0
   with Compare_Result i  -> i ;;
                           
 
@@ -601,10 +591,26 @@ let initial_board_trivial =
 
 let initial_board_simpler =
   [| [|  s ; s  ; x ; x |] ;
-     [|  s ; s  ; x ; x |] ;
-     [|  x ; h  ; h ; c2|] ;
-     [|  x ; x  ; c0; x |] ;
-     [|  x ; x  ; c1; x |] |] ;;
+     [|  s ; s  ; h ; h |] ;
+     [|  v3; x  ; v1; x |] ;
+     [|  v3; v2 ; v1; x |] ;
+     [|  x ; v2 ;  x; x |] |] ;;
+
+
+let initial_board_simpler2 =
+  [| [| c2 ; s  ; s  ; c1 |] ;
+     [| c0 ; s  ; s  ; c3 |] ;
+     [| v1 ; v2 ; v3 ; v0 |] ;
+     [| v1 ; v2 ; v3 ; v0 |] ;
+     [| x  ; x  ; x  ; x  |] |] ;;
+
+
+let initial_board =
+  [| [| v0 ; s  ; s  ; v1 |];
+     [| v0 ; s  ; s  ; v1 |];
+     [| v2 ; h  ; h  ; v3 |];
+     [| v2 ; c0 ; c1 ; v3 |];
+     [| c2 ; x  ; x  ; c3 |] |] ;;
 
 
 let repeat (element : 'a) (k : int) : 'a list =
