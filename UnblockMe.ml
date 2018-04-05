@@ -279,6 +279,8 @@ let x = (X, 0) and r = (R, 0) and m0 = (M, 0) ;;
 let (y0, y1) = ((Y, 0), (Y, 1)) ;;
 let (b0, b1, b2, b3) = ((B, 0), (B, 1), (B, 2), (B, 3)) ;;
 let all_pieces : piece list = [ r; y0; y1; b0; b1; b2; b3; m0 ] ;;
+let horizontal_Recs : piece list = [r; m0] ;;
+let vertical_Recs : piece list = [y0; y1; b0; b1; b2; b3] ;;
 
 
 type board = piece array array ;;
@@ -336,7 +338,7 @@ let rec updateArrayValues (newValue : 'a) (arr : 'a array array) (positions : (i
       arr.(i).(j) <- newValue;
       (updateArrayValues [@ocaml.tailcall]) newValue arr tail ;;
 
-(*
+
 let move_piece (bd : board) (p : piece) (dir : direction) : board option =  
   let new_board = Array.map Array.copy bd in
   let positions = get_positions p bd in
@@ -365,7 +367,7 @@ let all_combinations (x : 'a list) (y : 'b list) : ('a * 'b) list =
   let flatten (ls : 'e list list) : 'e list = 
     let rec flatten_helper (accumulator : 'e list) (lst : 'e list list) : 'e list = 
       match lst with 
-      |[]            ->  List.rev accumulator 
+      |[]            ->  accumulator 
       |head :: tail  ->  match head with 
                          |[]        ->  (flatten_helper [@ocaml.tailcall]) accumulator tail 
                          |hd :: tl  ->  (flatten_helper [@ocaml.tailcall]) (hd :: accumulator) (tl :: tail) in 
@@ -374,11 +376,11 @@ let all_combinations (x : 'a list) (y : 'b list) : ('a * 'b) list =
   let rec all_combinations' (a : 'a list) (b : 'b list) (accum : ('a * 'b) list list) : ('a * 'b) list list =
     let rec helper (a' : 'a) (b' : 'b list) (accum : ('a * 'b) list) : ('a * 'b) list =
       match b' with
-      |[]          ->  List.rev accum 
+      |[]          ->  accum 
       |h :: t      ->  (helper [@ocaml.tailcall]) a' t ((a', h) :: accum) in
     match a with
-    |[]         -> List.rev accum
-    |h :: t     -> (all_combinations' [@ocaml.tailcall]) t b (helper h b [] :: accum) in
+    |[]         ->  accum
+    |h :: t     ->  (all_combinations' [@ocaml.tailcall]) t b (helper h b [] :: accum) in
   flatten begin all_combinations' x y [] end ;;
 
 
@@ -397,10 +399,14 @@ let right = {drow = 0; dcol = 1} ;;
   
 let left = {drow = 0; dcol = -1} ;;
   
-let all_directions = [up; down; right; left] ;;
+let left_RightDirections = [left; right] ;;
 
-let all_moves = all_combinations all_pieces all_directions ;; 
+let up_DownDirections = [up; down] ;;
+
+let all_moves = (all_combinations horizontal_Recs left_RightDirections)
+                 @ (all_combinations vertical_Recs up_DownDirections) ;; 
   
+(*
 let possible_moves' (board : board) : move list =  
   let rec create_MoveList (x : (piece * direction) list) (acc : move list) : move list =
     match x with
