@@ -368,7 +368,7 @@ let all_combinations (x : 'a list) (y : 'b list) : ('a * 'b) list =
   let flatten (ls : 'e list list) : 'e list = 
     let rec flatten_helper (accumulator : 'e list) (lst : 'e list list) : 'e list = 
       match lst with 
-      |[]            ->  List.rev accumulator 
+      |[]            ->  accumulator 
       |head :: tail  ->  match head with 
                          |[]        ->  (flatten_helper [@ocaml.tailcall]) accumulator tail 
                          |hd :: tl  ->  (flatten_helper [@ocaml.tailcall]) (hd :: accumulator) (tl :: tail) in 
@@ -377,10 +377,10 @@ let all_combinations (x : 'a list) (y : 'b list) : ('a * 'b) list =
   let rec all_combinations' (a : 'a list) (b : 'b list) (accum : ('a * 'b) list list) : ('a * 'b) list list =
     let rec helper (a' : 'a) (b' : 'b list) (accum : ('a * 'b) list) : ('a * 'b) list =
       match b' with
-      |[]          ->  List.rev accum 
+      |[]          ->  accum 
       |h :: t      ->  (helper [@ocaml.tailcall]) a' t ((a', h) :: accum) in
     match a with
-    |[]         -> List.rev accum
+    |[]         -> accum
     |h :: t     -> (all_combinations' [@ocaml.tailcall]) t b (helper h b [] :: accum) in
   flatten begin all_combinations' x y [] end ;;
 
