@@ -263,8 +263,8 @@ let solve_puzzle (p : ('c, 'm) puzzle) (opset : ('c list, 's) set_operations) (c
 
 (* For the sake of comic relief!!! *)
 let () =
-  Printf.printf "\nThis %s puzzle sure is complicated stuff!\n" "Klotski";
-  Printf.printf "\n"
+  Printf.printf "\nThis %s puzzle sure is complicated stuff!\n" "Un-Block Me";
+  Printf.printf "\n" ;;
 
 
 (* Here begins Part B of the Unblock-Me Project. *)
@@ -405,12 +405,12 @@ let up_DownDirections = [up; down] ;;
 
 let all_moves = (all_combinations horizontal_Recs left_RightDirections)
                  @ (all_combinations vertical_Recs up_DownDirections) ;; 
-  
-(*
+
+
 let possible_moves' (board : board) : move list =  
   let rec create_MoveList (x : (piece * direction) list) (acc : move list) : move list =
     match x with
-    |[]             ->  acc 
+    |[]               ->  acc 
     |(p, d) :: tail   ->
       match move_piece board p d with
       |None      ->  create_MoveList tail acc 
@@ -418,15 +418,15 @@ let possible_moves' (board : board) : move list =
         (create_MoveList [@ocaml.tailcall]) tail ((Move (p, d, y)) :: acc) in 
   create_MoveList all_moves [] ;;
 
-
+  
 let possible_moves (board : board) : move list =
   let potential_moves = possible_moves' board in
   List.filter (fun (Move (x, y, z)) -> z <> board) potential_moves ;; 
 
+  
+let unblockMe : (board, move) puzzle = { move; possible_moves; final } ;;
 
-let klotski : (board, move) puzzle = { move; possible_moves; final } ;;
- *)
-
+  
 let display_board (board : board) : unit =
   open_graph " 800x800";
   let nRows = Array.length board in
@@ -467,18 +467,17 @@ let display_board (board : board) : unit =
   done ;;
 
 
-(*
 (* The following two functions are necessary to compare two different values of type piece_kind. *)
 let (<^>) (x : piece_kind) (y : piece_kind) : int =
   match x, y with
-  |X, (V|C|H|S)     -> -1
-  |V, (C|H|S)       -> -1
-  |C, (H|S)         -> -1
-  |H, S             -> -1 
-  |S, (H|C|V|X)     ->  1
-  |H, (C|V|X)       ->  1
-  |C, (V|X)         ->  1
-  |V, X             ->  1
+  |X, (R|B|M|Y)     -> -1
+  |R, (B|M|Y)       -> -1
+  |B, (M|Y)         -> -1
+  |M, Y             -> -1 
+  |Y, (M|B|R|X)     ->  1
+  |M, (B|R|X)       ->  1
+  |B, (R|X)         ->  1
+  |R, X             ->  1
   |_, _             ->  0 ;;
 
 
@@ -538,7 +537,7 @@ let general_matrix_indices rows columns =
    First assumption: board1 and board2 must have the same dimensions.
    Second assumption: The number of columns must be one less than the number of rows, 
    which of course is the case for the boards that are used to represent the Klotski Puzzle. 
- *)
+*)
 
 exception Compare_Result of int ;;
 
@@ -578,7 +577,7 @@ let boards_Add (boards : board list) (set : BoardSet.t) : BoardSet.t =
           BoardSet.add (List.hd boards) set ;;
 
 
-let solve_klotski = solve_puzzle klotski {empty=BoardSet.empty; add=boards_Add; mem=boards_inSet} ;;
+let solve_unblockMe = solve_puzzle unblockMe {empty=BoardSet.empty; add=boards_Add; mem=boards_inSet} ;;
 
 
 let repeat (element : 'a) (k : int) : 'a list =
@@ -587,4 +586,33 @@ let repeat (element : 'a) (k : int) : 'a list =
     then acc
     else (repeat' [@ocaml.tailcall]) elem (n - 1) (elem :: acc) in
   repeat' element k [] ;;
-*)
+
+  
+let startTimer = Unix.gettimeofday () ;;
+  
+                                                                                                                   
+let board_list = reverse begin solve_unblockMe initial_board end ;;
+
+                                                                                                                     
+let stopTimer = Unix.gettimeofday () ;;
+
+
+Printf.printf "It took about %.6f seconds for my program to find a solution!" (stopTimer -. startTimer) ;;
+
+
+print_endline "\n" ;;
+
+
+open_graph " 800x800" ;;
+
+
+List.map (List.iter (fun t -> display_board t; Unix.sleep 1))                                                         
+         (repeat board_list 5) ;;
+  
+
+Printf.printf "The puzzle was solved in %d moves!" (List.length board_list - 1) ;;
+
+
+print_endline "\n" ;;
+
+

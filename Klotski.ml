@@ -407,7 +407,7 @@ let all_moves = all_combinations all_pieces all_directions ;;
 let possible_moves' (board : board) : move list =  
   let rec create_MoveList (x : (piece * direction) list) (acc : move list) : move list =
     match x with
-    |[]             ->  acc 
+    |[]               ->  acc 
     |(p, d) :: tail   ->
       match move_piece board p d with
       |None      ->  create_MoveList tail acc 
