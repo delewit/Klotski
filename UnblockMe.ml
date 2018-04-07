@@ -304,6 +304,16 @@ let initial_board =
   |] ;;
 
 
+let initial_board_simpler =
+  [| [| x; x; x; y0; y1; x |];
+     [| x; x; x; y0; y1; x |];
+     [| r; r; x; y0; y1; x |];
+     [| x; b1; b0; m0; m0; x |];
+     [| x; b1; b0; x; x; x |];
+     [| x; x; x; x; x; x |] ;
+  |] ;;  
+
+
 let move (_ : board) (Move (_, _, b)) = b ;;
 
 
@@ -591,7 +601,7 @@ let repeat (element : 'a) (k : int) : 'a list =
 let startTimer = Unix.gettimeofday () ;;
   
                                                                                                                    
-let board_list = reverse begin solve_unblockMe initial_board end ;;
+let board_list = reverse begin solve_unblockMe initial_board_simpler end ;;
 
                                                                                                                      
 let stopTimer = Unix.gettimeofday () ;;
