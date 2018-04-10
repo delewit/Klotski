@@ -66,11 +66,17 @@ let rec loop (p : ('a -> bool)) (f : ('a -> 'a)) (x : 'a) : 'a =
   |false    ->  (loop [@ocaml.tailcall]) p f (f x) ;;
 
 
-let rec loop' (p : ('a -> bool)) (f : ('a -> 'a)) (x : 'a) : 'a list =
+let rec loop'' (p : ('a -> bool)) (f : ('a -> 'a)) (x : 'a) : 'a list =
   match p x with
-  |true        ->  [x]
-  |false       ->   x :: loop' p f (f x) ;;
+  |true        ->   [x]
+  |false       ->   x :: loop'' p f (f x) ;;
 
+
+(* Tail-recursive version of the previous function. *)
+let rec loop' ?accumulator:((acc :'a list)=[]) (p : ('a -> bool)) (f : ('a -> 'a)) (x : 'a) : 'a list =
+  match p x with
+  |true     -> reverse (x :: acc)
+  |false    -> (loop' [@ocaml.tailcall]) ~accumulator:(x :: acc) p f (f x) ;;
 
 
 let rec exists (p : ('a -> bool)) (ls : 'a list) : bool =
@@ -159,7 +165,7 @@ let solve_path (r : 'a rel) (p : 'a prop) (x : 'a) : 'a list =
 	(fun path -> p (last path)) [x] ;;
 
 
-  (* The following two functions can be used to instantiate records of type ('a, 'a list) set_operations. *)
+(* The following two functions can be used to instantiate records of type ('a, 'a list) set_operations. *)
 let rec member (x : 'a) (ls : 'a list) : bool =
   match ls with
   |[]            -> false
