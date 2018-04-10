@@ -1,5 +1,5 @@
 (* OCaml functions written by Douglas Lewit of Oakton Community College and Northeastern Illinois University. 
-   Everything in this program file is up-to-date as of March 20, 2018. *)
+   Everything in this program file is up-to-date as of April 4, 2018. *)
 
 open Graphics ;;
 
@@ -66,17 +66,11 @@ let rec loop (p : ('a -> bool)) (f : ('a -> 'a)) (x : 'a) : 'a =
   |false    ->  (loop [@ocaml.tailcall]) p f (f x) ;;
 
 
-let rec loop'' (p : ('a -> bool)) (f : ('a -> 'a)) (x : 'a) : 'a list =
+let rec loop' (p : ('a -> bool)) (f : ('a -> 'a)) (x : 'a) : 'a list =
   match p x with
-  |true        ->   [x]
-  |false       ->   x :: loop'' p f (f x) ;;
+  |true        ->  [x]
+  |false       ->   x :: loop' p f (f x) ;;
 
-
-(* Tail-recursive version of the previous function. *)
-let rec loop' ?accumulator:((acc :'a list)=[]) (p : ('a -> bool)) (f : ('a -> 'a)) (x : 'a) : 'a list =
-  match p x with
-  |true     -> reverse (x :: acc)
-  |false    -> (loop' [@ocaml.tailcall]) ~accumulator:(x :: acc) p f (f x) ;;
 
 
 let rec exists (p : ('a -> bool)) (ls : 'a list) : bool =
@@ -269,46 +263,55 @@ let solve_puzzle (p : ('c, 'm) puzzle) (opset : ('c list, 's) set_operations) (c
 
 (* For the sake of comic relief!!! *)
 let () =
-  Printf.printf "\nThis %s puzzle sure is complicated stuff!\n" "Klotski";
-  Printf.printf "\n"
+  Printf.printf "\nThis %s puzzle sure is complicated stuff!\n" "Un-Block Me";
+  Printf.printf "\n" ;;
 
 
-(* Here begins Part B of the Klotski Project. *)
+(* Here begins Part B of the Unblock-Me Project. *)
 
-type piece_kind = S|H|V|C|X ;;
+type piece_kind = X|R|B|M|Y ;;
 
 
 type piece = piece_kind * int ;;
 
 
-let x = (X, 0) and s = (S, 0) and h = (H, 0) ;;
-let (c0, c1, c2, c3) = ((C, 0), (C, 1), (C, 2), (C, 3)) ;;
-let (v0, v1, v2, v3) = ((V, 0), (V, 1), (V, 2), (V, 3)) ;;
-let all_pieces : piece list = [ s; h; c0; c1; c2; c3; v0; v1; v2; v3 ] ;;
+let x = (X, 0) and r = (R, 0) and m0 = (M, 0) ;;
+let (y0, y1) = ((Y, 0), (Y, 1)) ;;
+let (b0, b1, b2, b3) = ((B, 0), (B, 1), (B, 2), (B, 3)) ;;
+let all_pieces : piece list = [ r; y0; y1; b0; b1; b2; b3; m0 ] ;;
+let horizontal_Recs : piece list = [r; m0] ;;
+let vertical_Recs : piece list = [y0; y1; b0; b1; b2; b3] ;;
 
 
 type board = piece array array ;;
 
 
-let final (bd : board) : bool =
-  let check1 = (S, 0) = bd.(3).(1) in
-  let check2 = (S, 0) = bd.(3).(2) in
-  let check3 = (S, 0) = bd.(4).(1) in
-  let check4 = (S, 0) = bd.(4).(2) in
-  let boolean_list = [check1; check2; check3; check4]
-  in List.fold_right (&&) boolean_list true ;;
+let final (bd : board) : bool = 
+  bd.(2).(4) = r && bd.(2).(5) = r ;;
 
 
 type move = Move of piece * direction * board
  and direction = { dcol : int; drow : int } ;;
 
 
-let initial_configuration =
-  [| [| (V,0) ; (S,0) ; (S,0) ; (V,1) |] ;
-     [| (V,0) ; (S,0) ; (S,0) ; (V,1) |] ;
-     [| (V,2) ; (H,0) ; (H,0) ; (V,3) |] ;
-     [| (V,2) ; (C,0) ; (C,1) ; (V,3) |] ;
-     [| (C,2) ; (X,0) ; (X,0) ; (C,3) |] |] ;;
+let initial_board =
+  [| [| x; x; y0; y1; x; x |];
+     [| x; x; y0; y1; b0; b1 |];
+     [| r; r; y0; y1; b0; b1 |];
+     [| x; b3; x; x; b2; x |];
+     [| x; b3; m0; m0; b2; x |];
+     [| x; x; x; x; x; x |] ;
+  |] ;;
+
+
+let initial_board_simpler =
+  [| [| x; x; x; y0; y1; x |];
+     [| x; x; x; y0; y1; x |];
+     [| r; r; x; y0; y1; x |];
+     [| x; b1; b0; m0; m0; x |];
+     [| x; b1; b0; x; x; x |];
+     [| x; x; x; x; x; x |] ;
+  |] ;;  
 
 
 let move (_ : board) (Move (_, _, b)) = b ;;
@@ -386,8 +389,8 @@ let all_combinations (x : 'a list) (y : 'b list) : ('a * 'b) list =
       |[]          ->  accum 
       |h :: t      ->  (helper [@ocaml.tailcall]) a' t ((a', h) :: accum) in
     match a with
-    |[]         -> accum
-    |h :: t     -> (all_combinations' [@ocaml.tailcall]) t b (helper h b [] :: accum) in
+    |[]         ->  accum
+    |h :: t     ->  (all_combinations' [@ocaml.tailcall]) t b (helper h b [] :: accum) in
   flatten begin all_combinations' x y [] end ;;
 
 
@@ -406,10 +409,14 @@ let right = {drow = 0; dcol = 1} ;;
   
 let left = {drow = 0; dcol = -1} ;;
   
-let all_directions = [up; down; right; left] ;;
+let left_RightDirections = [left; right] ;;
 
-let all_moves = all_combinations all_pieces all_directions ;; 
-  
+let up_DownDirections = [up; down] ;;
+
+let all_moves = (all_combinations horizontal_Recs left_RightDirections)
+                 @ (all_combinations vertical_Recs up_DownDirections) ;; 
+
+
 let possible_moves' (board : board) : move list =  
   let rec create_MoveList (x : (piece * direction) list) (acc : move list) : move list =
     match x with
@@ -421,54 +428,50 @@ let possible_moves' (board : board) : move list =
         (create_MoveList [@ocaml.tailcall]) tail ((Move (p, d, y)) :: acc) in 
   create_MoveList all_moves [] ;;
 
-
+  
 let possible_moves (board : board) : move list =
   let potential_moves = possible_moves' board in
   List.filter (fun (Move (x, y, z)) -> z <> board) potential_moves ;; 
 
+  
+let unblockMe : (board, move) puzzle = { move; possible_moves; final } ;;
 
-let klotski : (board, move) puzzle = { move; possible_moves; final } ;;
-
-
+  
 let display_board (board : board) : unit =
-  open_graph " 600x700";
+  open_graph " 800x800";
   let nRows = Array.length board in
   let nCols = Array.length board.(0) in
   set_color 0x000000; 
-  set_line_width 14;
+  set_line_width 15;
   moveto 100 100;
-  lineto 100 600;
-  lineto 500 600;
-  lineto 500 100;
-  lineto 400 100;
-  moveto 200 100;
+  lineto 100 700;
+  lineto 700 700;
+  lineto 700 500;
+  moveto 700 400;
+  lineto 700 100;
   lineto 100 100;
   for i=0 to nRows - 1 do
     for j=0 to nCols - 1 do
       let row = 100 * (j+1) in
-      let col = 600 - 100*(i+1) in 
+      let col = 700 - 100*(i+1) in 
       match board.(i).(j) with
-      |(V, 0)    ->  set_color 0xFFFF00;
+      |(R, 0)    ->  set_color 0xFF0000;
                      fill_rect row col 100 100;
-      |(S, 0)    ->  set_color 0xFF0000;
+      |(Y, 0)    ->  set_color 0xFFFF00;
                      fill_rect row col 100 100;
-      |(V, 1)    ->  set_color 0x00FF00;
+      |(Y, 1)    ->  set_color 0xD4AF37;
                      fill_rect row col 100 100;
-      |(V, 2)    ->  set_color 0x980000;
+      |(B, 0)    ->  set_color 0x0000FF;
                      fill_rect row col 100 100;
-      |(H, 0)    ->  set_color 0x004099;
+      |(B, 1)    ->  set_color 0x00BFFF;
                      fill_rect row col 100 100;
-      |(V, 3)    ->  set_color 0x2F7FFF;
+      |(B, 2)    ->  set_color 0x6495ED;
                      fill_rect row col 100 100;
-      |(C, 0)    ->  set_color 0xFFBEBE;
+      |(B, 3)    ->  set_color 0x00CED1;
                      fill_rect row col 100 100;
-      |(C, 1)    ->  set_color 0xBEFFBE;
+      |(M, 0)    ->  set_color 0x9932CC;
                      fill_rect row col 100 100;
-      |(C, 2)    ->  set_color 0xBEBEFF;
-                     fill_rect row col 100 100;
-      |(C, 3)    ->  set_color 0xC8C8C8;
-                     fill_rect row col 100 100;
-      |_         ->  set_color 0x000000;
+      |_         ->  set_color 0x2B1D0E;
                      fill_rect row col 100 100;
     done;
   done ;;
@@ -477,14 +480,14 @@ let display_board (board : board) : unit =
 (* The following two functions are necessary to compare two different values of type piece_kind. *)
 let (<^>) (x : piece_kind) (y : piece_kind) : int =
   match x, y with
-  |X, (V|C|H|S)     -> -1
-  |V, (C|H|S)       -> -1
-  |C, (H|S)         -> -1
-  |H, S             -> -1 
-  |S, (H|C|V|X)     ->  1
-  |H, (C|V|X)       ->  1
-  |C, (V|X)         ->  1
-  |V, X             ->  1
+  |X, (R|B|M|Y)     -> -1
+  |R, (B|M|Y)       -> -1
+  |B, (M|Y)         -> -1
+  |M, Y             -> -1 
+  |Y, (M|B|R|X)     ->  1
+  |M, (B|R|X)       ->  1
+  |B, (R|X)         ->  1
+  |R, X             ->  1
   |_, _             ->  0 ;;
 
 
@@ -544,7 +547,7 @@ let general_matrix_indices rows columns =
    First assumption: board1 and board2 must have the same dimensions.
    Second assumption: The number of columns must be one less than the number of rows, 
    which of course is the case for the boards that are used to represent the Klotski Puzzle. 
- *)
+*)
 
 exception Compare_Result of int ;;
 
@@ -584,47 +587,7 @@ let boards_Add (boards : board list) (set : BoardSet.t) : BoardSet.t =
           BoardSet.add (List.hd boards) set ;;
 
 
-let solve_klotski = solve_puzzle klotski {empty=BoardSet.empty; add=boards_Add; mem=boards_inSet} ;;
-
-  
-let initial_board_trivial =
-  [| [| x  ; s  ; s  ; x  |] ;
-     [| x  ; s  ; s  ; x  |] ;
-     [| x  ; x ;  x ; x  |] ;
-     [| x  ; x ;  x ; x  |] ;
-     [| x  ; x  ; x  ; x  |] |] ;;
-
-
-let initial_board_simpler =
-  [| [|  s ; s  ; x ; x |] ;
-     [|  s ; s  ; h ; h |] ;
-     [|  v3; x  ; v1; x |] ;
-     [|  v3; v2 ; v1; x |] ;
-     [|  x ; v2 ;  x; x |] |] ;;
-
-
-let initial_board_simpler2 =
-  [| [| c2 ; s  ; s  ; c1 |] ;
-     [| c0 ; s  ; s  ; c3 |] ;
-     [| v1 ; v2 ; v3 ; v0 |] ;
-     [| v1 ; v2 ; v3 ; v0 |] ;
-     [| x  ; x  ; x  ; x  |] |] ;;
-
-
-let initial_board =
-  [| [| v0 ; s  ; s  ; v1 |];
-     [| v0 ; s  ; s  ; v1 |];
-     [| v2 ; h  ; h  ; v3 |];
-     [| v2 ; c0 ; c1 ; v3 |];
-     [| c2 ; x  ; x  ; c3 |] |] ;;
-
-
-let initial_board_minus_square =
-  [| [| v0 ; s  ; s  ; v1 |];
-     [| v0 ; s  ; s  ; v1 |];
-     [| v2 ; h  ; h  ; v3 |];
-     [| v2 ; c0 ; c1 ; v3 |];
-     [| c2 ; x  ; x  ; x  |] |] ;;  
+let solve_unblockMe = solve_puzzle unblockMe {empty=BoardSet.empty; add=boards_Add; mem=boards_inSet} ;;
 
 
 let repeat (element : 'a) (k : int) : 'a list =
@@ -633,21 +596,33 @@ let repeat (element : 'a) (k : int) : 'a list =
     then acc
     else (repeat' [@ocaml.tailcall]) elem (n - 1) (elem :: acc) in
   repeat' element k [] ;;
-                                                   
 
-(*  These lines got moved into UseKlotski.ml....
+  
 let startTimer = Unix.gettimeofday () ;;
   
-let solution_list = reverse begin solve_klotski initial_board_simpler end ;;
+                                                                                                                   
+let board_list = reverse begin solve_unblockMe initial_board_simpler end ;;
 
+                                                                                                                     
 let stopTimer = Unix.gettimeofday () ;;
 
-open_graph " 600x700" ;;
 
-List.map (List.iter (fun t -> display_board t; Unix.sleep 1)) (repeat solution_list 5) ;;
+Printf.printf "It took about %.6f seconds for my program to find a solution!" (stopTimer -. startTimer) ;;
 
-Printf.printf "Finding a solution to this puzzle required %.6f seconds.\n"  (stopTimer -. startTimer) ;;
 
-print_newline () ;;
-*)
+print_endline "\n" ;;
+
+
+open_graph " 800x800" ;;
+
+
+List.map (List.iter (fun t -> display_board t; Unix.sleep 1))                                                         
+         (repeat board_list 5) ;;
   
+
+Printf.printf "The puzzle was solved in %d moves!" (List.length board_list - 1) ;;
+
+
+print_endline "\n" ;;
+
+

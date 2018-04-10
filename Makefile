@@ -24,3 +24,8 @@ Klotski_Solver:  Klotski.ml UseKlotski.ml
 
 Klotski_Profiling:  Klotski.ml Profile_Klotski.ml
 	ocamlfind ocamlopt -p -o $@ $(PKGS) $^
+
+UnblockMe_Solver: UnblockMe.ml
+	ocamlfind ocamlopt -o $@ $(PKGS) $^
+
+
