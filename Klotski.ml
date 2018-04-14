@@ -211,8 +211,8 @@ let archive_map (opset : ('a, 'set) set_operations) (rel : 'a rel) ((s, l) : ('s
     match ls with
     |[]             ->  accumulator
     |head :: tail   ->  if opset.mem head s
-			then includeInList s tail accumulator
-			else includeInList s tail (head :: accumulator)
+			then (includeInList [@ocaml.tailcall]) s tail accumulator
+			else (includeInList [@ocaml.tailcall]) s tail (head :: accumulator)
   in
   let l_ = flat_map rel l in
   let l' = includeInList s l_ [] in
