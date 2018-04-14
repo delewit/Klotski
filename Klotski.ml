@@ -66,11 +66,17 @@ let rec loop (p : ('a -> bool)) (f : ('a -> 'a)) (x : 'a) : 'a =
   |false    ->  (loop [@ocaml.tailcall]) p f (f x) ;;
 
 
-let rec loop' (p : ('a -> bool)) (f : ('a -> 'a)) (x : 'a) : 'a list =
+let rec loop'' (p : ('a -> bool)) (f : ('a -> 'a)) (x : 'a) : 'a list =
   match p x with
-  |true        ->  [x]
-  |false       ->   x :: loop' p f (f x) ;;
+  |true        ->   [x]
+  |false       ->   x :: loop'' p f (f x) ;;
 
+
+(* Tail-recursive version of the previous function. *)
+let rec loop' ?accumulator:((acc :'a list)=[]) (p : ('a -> bool)) (f : ('a -> 'a)) (x : 'a) : 'a list =
+  match p x with
+  |true     -> reverse (x :: acc)
+  |false    -> (loop' [@ocaml.tailcall]) ~accumulator:(x :: acc) p f (f x) ;;
 
 
 let rec exists (p : ('a -> bool)) (ls : 'a list) : bool =
@@ -79,7 +85,7 @@ let rec exists (p : ('a -> bool)) (ls : 'a list) : bool =
   |head :: tail ->
     if p head
     then true
-    else exists p tail ;;
+    else (exists [@ocaml.tailcall]) p tail ;;
 
 
 let rec find (p : ('a -> bool)) (ls : 'a list) : 'a =
@@ -103,29 +109,14 @@ let near : int rel =   (* The default step size here is just 1. *)
     sequence lower_bound upper_bound
   in near' (* Here we have an example of "partial function application". *) ;;
 
-  
-(* flat_map returns the function, flat_map'. *)
-let flat_map (rel_function : 'e rel) : 'e list -> 'e list =
-  let flatten (ls : 'e list list) : 'e list = 
-    let rec flatten_helper (accumulator : 'e list) (lst : 'e list list) : 'e list = 
-      match lst with 
-      |[]            ->  List.rev accumulator 
-      |head :: tail  ->  match head with 
-                         |[]        ->  (flatten_helper [@ocaml.tailcall]) accumulator tail 
-                         |hd :: tl  ->  (flatten_helper [@ocaml.tailcall]) (hd :: accumulator) (tl :: tail) in 
-    flatten_helper [] ls 
-  in
-  let flat_map' (e_list : 'e list) : 'e list list = 
-    let rec flat_map'' (accum : 'e list list) (e_lst : 'e list) : 'e list list =
-      match e_lst with
-      |[]           ->  accum 
-      |head :: tail ->  (flat_map'' [@ocaml.tailcall]) (rel_function head :: accum) tail
-    in flat_map'' [] e_list
-  in 
-  (* The variable "x" in my composition function is really a dummy variable. *)
-  let composition (f : 'a -> 'b) (g : 'c -> 'a) (x : 'c) : 'b = f (g x)
-  in composition flatten flat_map' (* This is an example of "partial function application" 
-                                      and also function composition. *) ;;
+
+let flat_map (rel_function : 'e rel) (e_list : 'e list) : 'e list = 
+  let rec flat_map' (accumulator : 'e list) (rel_function : 'e rel) (e_list : 'e list) : 'e list =
+    match e_list with
+    |[]            -> accumulator
+    |head :: tail  ->
+      (flat_map' [@ocaml.tailcall]) (List.rev_append (rel_function head) accumulator) rel_function tail
+  in flat_map' [] rel_function e_list ;;
   
 
 (* iter_rel should be used like this: (iter_rel near 5) 2 --> the interpretation is that (iter_rel near 5) 2 should 
@@ -159,7 +150,7 @@ let solve_path (r : 'a rel) (p : 'a prop) (x : 'a) : 'a list =
 	(fun path -> p (last path)) [x] ;;
 
 
-  (* The following two functions can be used to instantiate records of type ('a, 'a list) set_operations. *)
+(* The following two functions can be used to instantiate records of type ('a, 'a list) set_operations. *)
 let rec member (x : 'a) (ls : 'a list) : bool =
   match ls with
   |[]            -> false
@@ -619,6 +610,14 @@ let initial_board_minus_square =
      [| v2 ; h  ; h  ; v3 |];
      [| v2 ; c0 ; c1 ; v3 |];
      [| c2 ; x  ; x  ; x  |] |] ;;  
+
+
+let initial_board_simpler3 =
+  [| [| c0  ; s  ; s  ; x  |] ;
+     [| c1  ; s  ; s  ; x  |] ;
+     [| c2  ; h ;  h ; c3  |] ;
+     [| x  ; x ;  x ; x  |] ;
+     [| x  ; x  ; x  ; x  |] |] ;;
 
 
 let repeat (element : 'a) (k : int) : 'a list =
