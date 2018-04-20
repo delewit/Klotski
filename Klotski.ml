@@ -24,12 +24,6 @@ type ('configuration, 'move) puzzle =
     }
 
 
-let rec last = function
-  |[]           -> raise (Invalid_argument "Bad arg!")
-  |head :: []   -> head
-  |head :: tail -> last tail ;;
-
-
 (* Tail-recursive reverse function on lists.  I'm not sure if List.rev is tail-recursive or not.  Maybe? *)
 let rec reverse ?acc:((accum:'a list)=[]) (a_list : 'a list) : 'a list =
   match a_list with
@@ -46,38 +40,11 @@ let map (f : 'a -> 'b) (a_list : 'a list) : 'b list =
   map' [] f a_list ;;
 
 
-module IntSet = Set.Make(struct
-			  type t = int
-			  let compare = Pervasives.compare
-			end)
-
-
-let int_set_ops : (int, IntSet.t) set_operations =
-  {
-    empty = IntSet.empty ;
-    mem = IntSet.mem ;
-    add = IntSet.add ;
-  }
-
-
 let rec loop (p : ('a -> bool)) (f : ('a -> 'a)) (x : 'a) : 'a =
   match p x with
   |true     ->  x
   |false    ->  (loop [@ocaml.tailcall]) p f (f x) ;;
-
-
-let rec loop'' (p : ('a -> bool)) (f : ('a -> 'a)) (x : 'a) : 'a list =
-  match p x with
-  |true        ->   [x]
-  |false       ->   x :: loop'' p f (f x) ;;
-
-
-(* Tail-recursive version of the previous function. *)
-let rec loop' ?accumulator:((acc :'a list)=[]) (p : ('a -> bool)) (f : ('a -> 'a)) (x : 'a) : 'a list =
-  match p x with
-  |true     -> reverse (x :: acc)
-  |false    -> (loop' [@ocaml.tailcall]) ~accumulator:(x :: acc) p f (f x) ;;
-
+  
 
 let rec exists (p : ('a -> bool)) (ls : 'a list) : bool =
   match ls with
@@ -130,72 +97,6 @@ let iter_rel (rel_func : 'e rel) (i : int) : 'e rel =
      in g ;;
 
 
-(* Here is step #7 in building a generic puzzle solver that will later be applied to the Klotski Puzzle problem. 
-The only possible problem with the "solve" function is that it could iterate indefinitely if no solution is ever 
-found. *)
-let solve (r : 'a rel) (p : 'a prop) (x : 'a) : 'a =
-  let rec solver (r' : 'a rel) (x' : 'a) (n : int) =
-    let listOfPossibleSolutions = (iter_rel r' n) x in
-    if exists p listOfPossibleSolutions
-    then find p listOfPossibleSolutions
-    else solver r' x (n + 1)
-  in if p x
-     then x
-     else solver r x 1 ;;
-
-
-(* The correct solve_path function needed to solve the Klotski Puzzle problem. *)
-let solve_path (r : 'a rel) (p : 'a prop) (x : 'a) : 'a list =
-  solve (fun path -> map (fun y -> List.rev_append (reverse path) [y]) (r (last path)))
-	(fun path -> p (last path)) [x] ;;
-
-
-(* The following two functions can be used to instantiate records of type ('a, 'a list) set_operations. *)
-let rec member (x : 'a) (ls : 'a list) : bool =
-  match ls with
-  |[]            -> false
-  |head :: tail  -> if x = head
-		    then true
-		    else member x tail ;;
-
-
-let rec addElement (x : 'a) (ls : 'a list) : 'a list =
-  match member x ls with
-  |false       -> x :: ls
-  |true        -> ls ;;
-
-
-let list_set : ('a, 'a list) set_operations =
-  {
-    empty = [] ;
-    mem = member ;
-    add = addElement ;
-  }
-
-(* The following two functions can be used to find the union and intersection of sets with the CAVEAT that these 
-   sets are represented as lists, AND FURTHERMORE that these lists are embedded within a larger list. *)        
-let union (listOfSets : 'a list list) : 'a list =
-  let rec removeDups (lst : 'a list) : 'a list =
-    match lst with
-    |[]           -> []
-    |head :: tail -> if member head tail
-		     then removeDups tail
-		     else head :: removeDups tail
-  in List.sort compare begin List.fold_left (fun x y -> removeDups (x @ y)) [] listOfSets end ;;
-
-
-let intersection (listOfSets : 'a list list) : 'a list =
-  let rec findSharedElements (list1 : 'a list) (list2 : 'a list) (intersection : 'a list) : 'a list =
-    match list1 with
-    |[]              -> intersection
-    |head :: tail    -> if member head list2
-			then findSharedElements tail list2 (head :: intersection)
-			else findSharedElements tail list2 intersection
-  in let findSharedElems ls1 ls2 = findSharedElements ls1 ls2 []
-     in
-     List.sort compare begin List.fold_left (fun x y -> findSharedElems x y) (List.hd listOfSets) (List.tl listOfSets) end ;;
-
-
 (* Here is Step #9 of the Klotski Puzzle solution guide from the OCaml MOOC. *)
 let archive_map (opset : ('a, 'set) set_operations) (rel : 'a rel) ((s, l) : ('set * 'a list)) : ('set * 'a list) =
   let rec includeInList (s : 'set) (ls : 'a list) (accumulator : 'a list) : 'a list =
@@ -220,31 +121,14 @@ let solve' (opset : ('a, 'set) set_operations) (rel : 'a rel) (predicate : 'a pr
   in find predicate l ;;
 
 
-let e_rel_list1 (f : 'e rel) (x : 'e list) : 'e list list =
-  let elistList = f (last x)
-  in let rec appendLists (x1 : 'a list) (x2 : 'a list) (accum : 'a list list) : 'a list list =
-       match x2 with
-       |[]           -> accum
-       |head :: tail -> appendLists x1 tail ((List.rev_append (reverse x1) [head]) :: accum)
-     in appendLists x elistList [] ;;
-
-
-let e_rel_list2 (f : 'e rel) (x : 'e list) : 'e list list =
-  let elistList = f (last x)
-  in map (fun t -> List.rev_append (reverse x) [t]) elistList ;;
-
-
-(* Similar to the last two e_rel_list functions, except this time we're building up 
-   sublists in the reverse order using cons rather than an append operation. 
-   I'm struggling to make this algorithm more efficient! *)
-let e_rel_list3 (f : 'e rel) (e_list : 'e list) : 'e list list =
+let e_rel_list (f : 'e rel) (e_list : 'e list) : 'e list list =
   let e_list' = f (List.hd e_list) in
   List.fold_left (fun x y -> (y :: e_list) :: x) [] e_list' ;;
 
 
 (* Here is Step #11 of the Klotski Puzzle solution guide from the OCaml MOOC. *)
 let solve_path' (opset : ('a list, 'set) set_operations) (rel : 'a rel) (predicate : 'a prop) (x : 'a) : 'a list =
-  solve' opset (e_rel_list3 rel) (fun path -> let head_of_path = List.hd path
+  solve' opset (e_rel_list rel) (fun path -> let head_of_path = List.hd path
 					      in predicate head_of_path) [x] ;;
 
 
@@ -376,13 +260,6 @@ let all_combinations (x : 'a list) (y : 'b list) : ('a * 'b) list =
   flatten begin all_combinations' x y [] end ;;
 
 
-let first (x, _, _) = x ;;
-
-let second (_, y, _) = y ;;
-
-(* let third (_, _, z) = z ;; *)
-
-
 let up = {drow = -1; dcol = 0} ;;
   
 let down = {drow = 1; dcol = 0} ;;
@@ -479,58 +356,12 @@ let (<!>) ((pk1, int1) : piece) ((pk2, int2) : piece) : int =
   in if comparison = 0
      then compare int1 int2
      else comparison ;;
-		       
-
-(* The next function generates a list of all the indices of a matrix with the condition that 
-   the number of columns of the matrix is one less than the number of rows of the matrix.
-   The argument "k" is the number of rows of the matrix with the assumption that the first 
-   row has index 0. BELONGS IN ATTIC.ML!!! *)
-let matrix_indices k =
-  let rec indices' (m : int) (n : int) (upperLimit : int) : (int * int) list =
-  if m > upperLimit
-  then []
-  else if (n mod upperLimit) = 0
-       then (m + 1, n mod upperLimit) :: indices' (m + 1) (n + 1) upperLimit 
-       else (m, n mod upperLimit) :: indices' m (n + 1) upperLimit in 
-  let rec exceptLast (lst : (int * int) list) : (int * int) list =
-    match lst with
-    |[]      -> raise (failwith "Empty list!")
-    |head :: []     -> []
-    |head :: tail   -> head :: exceptLast tail in
-  exceptLast (indices' (-1) 0 k) ;;
-
-
-
-(* Similar to the previous function, "matrix_indices", but this time we don't have to assume 
-   that the number of columns is one less than the number of rows.  This function is more general. 
-   The user provides the number of rows and columns of the matrix.  The function returns all the 
-   indices in row-major order with the assumption that the first row is numbered 0, and that the 
-   first column is similarly numbered 0. BELONGS IN ATTIC.ML!!! *) 
-let general_matrix_indices rows columns =
-  let matrix_indices rows columns = 
-    let f x = if x > rows - 1 
-              then 0 
-              else x + 1 in 
-    let g y = if y > columns - 1 
-              then 0 
-              else y + 1 in 
-    let rec h x y = 
-      if x >= rows && y >= columns 
-      then [] 
-      else if y < columns 
-           then (x, g y) :: h x (g y) 
-           else (f x, g y) :: h (f x) (g y) in 
-    let u x y = (x, y) :: h x y in u 0 0 in  
-    matrix_indices (rows - 1) (columns - 1) ;;
-
-
 
 (* This function can only be used if certain assumptions are true. 
    First assumption: board1 and board2 must have the same dimensions.
    Second assumption: The number of columns must be one less than the number of rows, 
    which of course is the case for the boards that are used to represent the Klotski Puzzle. 
  *)
-
 exception Compare_Result of int ;;
 
 let boardSet_Compare (board1 : board) (board2 : board) : int =
