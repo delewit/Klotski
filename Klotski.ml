@@ -1,5 +1,5 @@
-(* OCaml functions written by Douglas Lewit of Oakton Community College and Northeastern Illinois University. 
-   Everything in this program file is up-to-date as of March 20, 2018. *)
+(* OCaml functions written by Douglas Lewit of Oakton Community College 
+and Northeastern Illinois University. *)
 
 open Graphics ;;
 
@@ -24,14 +24,15 @@ type ('configuration, 'move) puzzle =
     }
 
 
-(* Tail-recursive reverse function on lists.  I'm not sure if List.rev is tail-recursive or not.  Maybe? *)
+(* Tail-recursive user-defined reverse function on lists. *)
 let rec reverse ?acc:((accum:'a list)=[]) (a_list : 'a list) : 'a list =
   match a_list with
   |[]            ->  accum
   |head :: tail  ->  (reverse [@ocaml.tailcall]) ~acc:(head :: accum) tail ;;
 
 
-(* Tail-recursive map function on lists.  I'm not sure if List.map is tail-recursive or not.  Maybe? *)
+(* Tail-recursive map function on lists.  Using this because List.map 
+   is not a tail-recursive function. *)
 let map (f : 'a -> 'b) (a_list : 'a list) : 'b list =
   let rec map' (accum : 'b list) (f : 'a -> 'b) (a_list : 'a list) : 'b list = 
     match a_list with 
@@ -62,62 +63,32 @@ let rec find (p : ('a -> bool)) (ls : 'a list) : 'a =
     if p head
     then head
     else (find [@ocaml.tailcall]) p tail ;;
-
-(* near returns the function, near'. *)
-let near : int rel =   (* The default step size here is just 1. *)
-  let rec sequence ?step:(s=1) lower upper =
-    if lower > upper
-    then []
-    else lower :: sequence ~step:s (lower + s) upper
-  in
-  let near' (n : int) : int list =
-    let lower_bound = n - 2 in
-    let upper_bound = n + 2 in
-    sequence lower_bound upper_bound
-  in near' (* Here we have an example of "partial function application". *) ;;
-
+  
 
 let flat_map (rel_function : 'e rel) (e_list : 'e list) : 'e list = 
-  let rec flat_map' (accumulator : 'e list) (rel_function : 'e rel) (e_list : 'e list) : 'e list =
+  let rec flat_map' (accumulator : 'e list) (rel_function : 'e rel)
+                    (e_list : 'e list) : 'e list =
     match e_list with
     |[]            -> accumulator
     |head :: tail  ->
-      (flat_map' [@ocaml.tailcall]) (List.rev_append (rel_function head) accumulator) rel_function tail
+      (flat_map' [@ocaml.tailcall])
+        (List.rev_append (rel_function head) accumulator) rel_function tail
   in flat_map' [] rel_function e_list ;;
-  
-
-(* iter_rel should be used like this: (iter_rel near 5) 2 --> the interpretation is that (iter_rel near 5) 2 should 
-   yield the same result as flat_map near (flat_map near( flat_map near( flat_map near (near 2)))).  
-   Try it for yourself!  By the way, this function was NOT easy to write!!! *)
-let iter_rel (rel_func : 'e rel) (i : int) : 'e rel =
-  let rec f x n = if n = 1
-		  then x
-		  else (f [@ocaml.tailcall]) (x |> flat_map rel_func) (n - 1)
-  in let g k = f (rel_func k) i
-     in g ;;
 
 
 (* Here is Step #9 of the Klotski Puzzle solution guide from the OCaml MOOC. *)
-let archive_map (opset : ('a, 'set) set_operations) (rel : 'a rel) ((s, l) : ('set * 'a list)) : ('set * 'a list) =
-  let rec includeInList (s : 'set) (ls : 'a list) (accumulator : 'a list) : 'a list =
-    match ls with
-    |[]             ->  accumulator
-    |head :: tail   ->  if opset.mem head s
-			then (includeInList [@ocaml.tailcall]) s tail accumulator
-			else (includeInList [@ocaml.tailcall]) s tail (head :: accumulator)
-  in
-  let l_ = flat_map rel l in
-  let l' = includeInList s l_ [] in
-  let s' = List.fold_left (fun set element -> opset.add element set) s l'
-  in
-  (s', l') ;;
-  
+let archive_map (opset : ('a, 'set) set_operations) (rel : 'a rel) ((s, l) : ('set * 'a list)) =
+  let archive (x, y) z = if opset.mem z x then (x, y) else (opset.add z x, z :: y) in
+  let possible_moves = flat_map rel l in 
+  List.fold_left archive (s, []) possible_moves  ;;
 
-(* This version of the solve' function is definitely a little simpler than the previous one.  Unfortunately, 
-   my program still contains a hot spot or bottleneck SOMEWHERE, but where??? 
- *)
-let solve' (opset : ('a, 'set) set_operations) (rel : 'a rel) (predicate : 'a prop) (x : 'a) : 'a =
-  let (s, l) = loop (fun (x, y) -> exists predicate y) (fun (x, y) -> archive_map opset rel (x, y)) (opset.empty, [x])
+
+let solve' (opset : ('a, 'set) set_operations) (rel : 'a rel)
+           (predicate : 'a prop) (x : 'a) : 'a =
+  let (s, l) =
+    loop (fun (x, y) -> exists predicate y)
+         (fun (x, y) -> archive_map opset rel (x, y))
+         (opset.empty, [x])
   in find predicate l ;;
 
 
@@ -127,19 +98,15 @@ let e_rel_list (f : 'e rel) (e_list : 'e list) : 'e list list =
 
 
 (* Here is Step #11 of the Klotski Puzzle solution guide from the OCaml MOOC. *)
-let solve_path' (opset : ('a list, 'set) set_operations) (rel : 'a rel) (predicate : 'a prop) (x : 'a) : 'a list =
-  solve' opset (e_rel_list rel) (fun path -> let head_of_path = List.hd path
-					      in predicate head_of_path) [x] ;;
+let solve_path' (opset : ('a list, 'set) set_operations)
+                (rel : 'a rel) (predicate : 'a prop) (x : 'a) : 'a list =
+  solve' opset (e_rel_list rel) (fun path -> predicate (List.hd path)) [x] ;;
 
 
-let solve_puzzle (p : ('c, 'm) puzzle) (opset : ('c list, 's) set_operations) (c : 'c) : 'c list =
-  solve_path' opset (fun x -> map (p.move x) (p.possible_moves x)) (p.final) c ;;
-
-
-(* For the sake of comic relief!!! *)
-let () =
-  Printf.printf "\nThis %s puzzle sure is complicated stuff!\n" "Klotski";
-  Printf.printf "\n"
+let solve_puzzle (p : ('c, 'm) puzzle) (opset : ('c list, 's) set_operations)
+                 (c : 'c) : 'c list =
+  solve_path' opset (fun x -> map (p.move x) (p.possible_moves x))
+              p.final c ;;
 
 
 (* Here begins Part B of the Klotski Project. *)
@@ -159,13 +126,19 @@ let all_pieces : piece list = [ s; h; c0; c1; c2; c3; v0; v1; v2; v3 ] ;;
 type board = piece array array ;;
 
 
+let is_S0 (s : piece) : bool =
+  match s with
+  |(S, 0)     -> true
+  |_          -> false ;;
+
+
 let final (bd : board) : bool =
-  let check1 = (S, 0) = bd.(3).(1) in
-  let check2 = (S, 0) = bd.(3).(2) in
-  let check3 = (S, 0) = bd.(4).(1) in
-  let check4 = (S, 0) = bd.(4).(2) in
-  let boolean_list = [check1; check2; check3; check4]
-  in List.fold_right (&&) boolean_list true ;;
+  let check1 = is_S0 bd.(3).(1) in
+  let check2 = is_S0 bd.(3).(2) in
+  let check3 = is_S0 bd.(4).(1) in
+  let check4 = is_S0 bd.(4).(2) in
+  check1 && check2 && check3 && check4 ;;
+
 
 
 type move = Move of piece * direction * board
@@ -206,8 +179,8 @@ let get_positions (p : piece) (bd : board) : ((int * int) list) =
   !accumulator ;;
 
 
-let rec updateArrayValues (newValue : 'a) (arr : 'a array array) (positions : (int * int) list)
-    : unit = 
+let rec updateArrayValues (newValue : 'a) (arr : 'a array array)
+                          (positions : (int * int) list) : unit = 
   match positions with
   |[]               -> ()
   |(i, j) :: tail   ->
@@ -223,7 +196,7 @@ let move_piece (bd : board) (p : piece) (dir : direction) : board option =
   let rec testPieces (p : piece) (p_list : piece option list) : bool =
     match p_list with
     |[]               -> true
-    |Some p' :: tail  -> if p' = p || p' = (X, 0) 
+    |Some p' :: tail  -> if pieceEquals p p' || pieceEquals p' (X, 0) 
 			 then testPieces p tail
 			 else false
     |None :: tail     -> false 
@@ -231,33 +204,40 @@ let move_piece (bd : board) (p : piece) (dir : direction) : board option =
   if testPieces p pieces
   then 
     begin 
-    updateArrayValues (X, 0) new_board positions;
-    updateArrayValues p new_board positions';
-    Some new_board;
+      updateArrayValues (X, 0) new_board positions;
+      updateArrayValues p new_board positions';
+      Some new_board;
     end
   else None ;;
 
 
-(* Here's a good helper function to help with the possible_moves function that comes next! *)
+(* Here's a good helper function to help with the possible_moves 
+   function that comes next! *)
 let all_combinations (x : 'a list) (y : 'b list) : ('a * 'b) list =
   let flatten (ls : 'e list list) : 'e list = 
-    let rec flatten_helper (accumulator : 'e list) (lst : 'e list list) : 'e list = 
+    let rec flatten_helper (accumulator : 'e list)
+                           (lst : 'e list list) : 'e list = 
       match lst with 
       |[]            ->  accumulator 
-      |head :: tail  ->  match head with 
-                         |[]        ->  (flatten_helper [@ocaml.tailcall]) accumulator tail 
-                         |hd :: tl  ->  (flatten_helper [@ocaml.tailcall]) (hd :: accumulator) (tl :: tail) in 
-    flatten_helper [] ls 
-  in 
-  let rec all_combinations' (a : 'a list) (b : 'b list) (accum : ('a * 'b) list list) : ('a * 'b) list list =
-    let rec helper (a' : 'a) (b' : 'b list) (accum : ('a * 'b) list) : ('a * 'b) list =
+      |head :: tail  ->
+        match head with 
+        |[]        ->  (flatten_helper [@ocaml.tailcall]) accumulator tail 
+        |hd :: tl  ->  (flatten_helper [@ocaml.tailcall]) (hd :: accumulator)
+                       (tl :: tail) in flatten_helper [] ls in 
+  let rec all_combinations' (a : 'a list) (b : 'b list)
+                            (accum : ('a * 'b) list list)
+          : ('a * 'b) list list =
+    let rec helper (a' : 'a) (b' : 'b list)
+                   (accum : ('a * 'b) list) : ('a * 'b) list =
       match b' with
       |[]          ->  accum 
       |h :: t      ->  (helper [@ocaml.tailcall]) a' t ((a', h) :: accum) in
     match a with
-    |[]         -> accum
-    |h :: t     -> (all_combinations' [@ocaml.tailcall]) t b (helper h b [] :: accum) in
-  flatten begin all_combinations' x y [] end ;;
+    |[]         ->
+      accum
+    |h :: t     ->
+      (all_combinations' [@ocaml.tailcall]) t b (helper h b [] :: accum)
+  in flatten begin all_combinations' x y [] end ;;
 
 
 let up = {drow = -1; dcol = 0} ;;
@@ -272,69 +252,6 @@ let all_directions = [up; down; right; left] ;;
 
 let all_moves = all_combinations all_pieces all_directions ;; 
   
-let possible_moves' (board : board) : move list =  
-  let rec create_MoveList (x : (piece * direction) list) (acc : move list) : move list =
-    match x with
-    |[]               ->  acc 
-    |(p, d) :: tail   ->
-      match move_piece board p d with
-      |None      ->  create_MoveList tail acc 
-      |Some y    ->
-        (create_MoveList [@ocaml.tailcall]) tail ((Move (p, d, y)) :: acc) in 
-  create_MoveList all_moves [] ;;
-
-
-let possible_moves (board : board) : move list =
-  let potential_moves = possible_moves' board in
-  List.filter (fun (Move (x, y, z)) -> z <> board) potential_moves ;; 
-
-
-let klotski : (board, move) puzzle = { move; possible_moves; final } ;;
-
-
-let display_board (board : board) : unit =
-  open_graph " 600x700";
-  let nRows = Array.length board in
-  let nCols = Array.length board.(0) in
-  set_color 0x000000; 
-  set_line_width 14;
-  moveto 100 100;
-  lineto 100 600;
-  lineto 500 600;
-  lineto 500 100;
-  lineto 400 100;
-  moveto 200 100;
-  lineto 100 100;
-  for i=0 to nRows - 1 do
-    for j=0 to nCols - 1 do
-      let row = 100 * (j+1) in
-      let col = 600 - 100*(i+1) in 
-      match board.(i).(j) with
-      |(V, 0)    ->  set_color 0xFFFF00;
-                     fill_rect row col 100 100;
-      |(S, 0)    ->  set_color 0xFF0000;
-                     fill_rect row col 100 100;
-      |(V, 1)    ->  set_color 0x00FF00;
-                     fill_rect row col 100 100;
-      |(V, 2)    ->  set_color 0x980000;
-                     fill_rect row col 100 100;
-      |(H, 0)    ->  set_color 0x004099;
-                     fill_rect row col 100 100;
-      |(V, 3)    ->  set_color 0x2F7FFF;
-                     fill_rect row col 100 100;
-      |(C, 0)    ->  set_color 0xFFBEBE;
-                     fill_rect row col 100 100;
-      |(C, 1)    ->  set_color 0xBEFFBE;
-                     fill_rect row col 100 100;
-      |(C, 2)    ->  set_color 0xBEBEFF;
-                     fill_rect row col 100 100;
-      |(C, 3)    ->  set_color 0xC8C8C8;
-                     fill_rect row col 100 100;
-      |_         ->  set_color 0x000000;
-                     fill_rect row col 100 100;
-    done;
-  done ;;
-
 
 (* The following two functions are necessary to compare two different values of type piece_kind. *)
 let (<^>) (x : piece_kind) (y : piece_kind) : int =
@@ -387,7 +304,6 @@ module BoardSet =
     ) ;;
 
 
-
 (* The function below tests to see if all the boards in some board list can be found in 
    the board set. *)
 let boards_inSet (boards : board list) (set : BoardSet.t) : bool =
@@ -400,7 +316,67 @@ let boards_Add (boards : board list) (set : BoardSet.t) : BoardSet.t =
           BoardSet.add (List.hd boards) set ;;
 
 
-let solve_klotski = solve_puzzle klotski {empty=BoardSet.empty; add=boards_Add; mem=boards_inSet} ;;
+let possible_moves' (board : board) : move list =  
+  let rec create_MoveList (x : (piece * direction) list) (acc : move list)
+          : move list =
+    match x with
+    |[]               ->  acc 
+    |(p, d) :: tail   ->
+      match move_piece board p d with
+      |None      ->  create_MoveList tail acc 
+      |Some y    ->
+        (create_MoveList [@ocaml.tailcall]) tail ((Move (p, d, y)) :: acc) in 
+  create_MoveList all_moves [] ;;
+
+
+let possible_moves (board : board) : move list =
+  let potential_moves = possible_moves' board in
+  List.filter (fun (Move (x, y, z)) -> boardSet_Compare z board <> 0 )
+              potential_moves ;; 
+
+
+let klotski : (board, move) puzzle = { move; possible_moves; final } ;;
+
+
+let display_board (board : board) : unit =
+  open_graph " 600x700";
+  let nRows = Array.length board in
+  let nCols = Array.length board.(0) in
+  set_color 0x000000; 
+  set_line_width 14;
+  moveto 100 100;
+  lineto 100 600;
+  lineto 500 600;
+  lineto 500 100;
+  lineto 400 100;
+  moveto 200 100;
+  lineto 100 100;
+  for i=0 to nRows - 1 do
+    for j=0 to nCols - 1 do
+      let row = 100 * (j+1) in
+      let col = 600 - 100*(i+1) in 
+      let color =
+      match board.(i).(j) with
+      |(V, 0)    ->  0xFFFF00
+      |(S, 0)    ->  0xFF0000
+      |(V, 1)    ->  0x00FF00
+      |(V, 2)    ->  0x980000
+      |(H, 0)    ->  0x004099
+      |(V, 3)    ->  0x2F7FFF
+      |(C, 0)    ->  0xFFBEBE
+      |(C, 1)    ->  0xBEFFBE
+      |(C, 2)    ->  0xBEBEFF
+      |(C, 3)    ->  0xA8A8A8
+      |_         ->  0x000000
+      in set_color color;
+         fill_rect row col 100 100;
+    done;
+  done ;;
+
+
+let solve_klotski =
+  solve_puzzle klotski
+               {empty=BoardSet.empty; add=boards_Add; mem=boards_inSet} ;;
 
   
 let initial_board_trivial =
@@ -458,20 +434,3 @@ let repeat (element : 'a) (k : int) : 'a list =
     else (repeat' [@ocaml.tailcall]) elem (n - 1) (elem :: acc) in
   repeat' element k [] ;;
                                                    
-
-(*  These lines got moved into UseKlotski.ml....
-let startTimer = Unix.gettimeofday () ;;
-  
-let solution_list = reverse begin solve_klotski initial_board_simpler end ;;
-
-let stopTimer = Unix.gettimeofday () ;;
-
-open_graph " 600x700" ;;
-
-List.map (List.iter (fun t -> display_board t; Unix.sleep 1)) (repeat solution_list 5) ;;
-
-Printf.printf "Finding a solution to this puzzle required %.6f seconds.\n"  (stopTimer -. startTimer) ;;
-
-print_newline () ;;
-*)
-  
