@@ -206,20 +206,8 @@ let intersection (listOfSets : 'a list list) : 'a list =
 
 
 (* Here is Step #9 of the Klotski Puzzle solution guide from the OCaml MOOC. *)
-let archive_map (opset : ('a, 'set) set_operations) (rel : 'a rel) ((s, l) : ('set * 'a list)) : ('set * 'a list) =
-  let rec includeInList (s : 'set) (ls : 'a list) (accumulator : 'a list) : 'a list =
-    match ls with
-    |[]             ->  accumulator
-    |head :: tail   ->  if opset.mem head s
-			then includeInList s tail accumulator
-			else includeInList s tail (head :: accumulator)
-  in
-  let l_ = flat_map rel l in
-  let l' = includeInList s l_ [] in
-  let s' = List.fold_left (fun set element -> opset.add element set) s l'
-  in
-  (s', l') ;;
-  
+let archive_map (opset : ('a, 'set) set_operations) (rel : 'a rel) ((s, l) : ('set * 'a list)) =                                                   let archive (x, y) z = if opset.mem z x then (x, y) else (opset.add z x, z :: y) in                                                              let possible_moves = flat_map rel l in                                                                                                           List.fold_left archive (s, []) possible_moves  ;;
+
 
 (* This version of the solve' function is definitely a little simpler than the previous one.  Unfortunately, 
    my program still contains a hot spot or bottleneck SOMEWHERE, but where??? 
@@ -601,7 +589,7 @@ let repeat (element : 'a) (k : int) : 'a list =
 let startTimer = Unix.gettimeofday () ;;
   
                                                                                                                    
-let board_list = reverse begin solve_unblockMe initial_board_simpler end ;;
+let board_list = reverse begin solve_unblockMe initial_board end ;;
 
                                                                                                                      
 let stopTimer = Unix.gettimeofday () ;;

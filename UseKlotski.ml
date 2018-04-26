@@ -1,3 +1,6 @@
+(* This file calls upon functions defined in the Graphics module, and also calls upon functions, 
+   records, and various data types defined in the file, Klotski.ml. *)
+
 open Graphics ;;
 
 open Klotski ;;
